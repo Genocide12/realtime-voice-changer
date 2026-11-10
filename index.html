@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Голос-подменщик — real-time voice conversion за один вечер</title>
+<meta name="description" content="Интерактивный гайд: подмена голоса в реальном времени (w-okada + RVC + VB-Cable) с калькулятором задержки и живым DAF-демо на Web Audio API.">
+<style>
+:root{
+  --bg:#0b0e14; --panel:#121826; --panel2:#0f1420; --line:#1f2937;
+  --text:#e5e7eb; --muted:#94a3b8; --dim:#64748b;
+  --cyan:#22d3ee; --violet:#a78bfa; --amber:#f59e0b; --green:#34d399; --red:#f87171;
+  --mono:ui-monospace,"JetBrains Mono","Cascadia Code",Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:76px}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.65}
+a{color:var(--cyan);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);font-size:.88em;background:#1a2234;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:#bae6fd;white-space:nowrap}
+.wrap{max-width:1060px;margin:0 auto;padding:0 20px}
+
+/* ---------- header / nav ---------- */
+header{padding:64px 0 40px;background:
+  radial-gradient(900px 400px at 15% -10%,rgba(34,211,238,.13),transparent 60%),
+  radial-gradient(700px 380px at 90% 0%,rgba(167,139,250,.12),transparent 60%);}
+h1{font-size:clamp(28px,5vw,44px);line-height:1.15;font-weight:800;letter-spacing:-.5px}
+h1 .grad{background:linear-gradient(90deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);font-size:clamp(15px,2.2vw,18px);max-width:760px;margin:16px 0 22px}
+.badges{display:flex;flex-wrap:wrap;gap:8px}
+.badge{font-family:var(--mono);font-size:12px;color:var(--muted);border:1px solid var(--line);background:rgba(18,24,38,.7);border-radius:999px;padding:4px 12px}
+.badge b{color:var(--cyan);font-weight:600}
+
+nav{position:sticky;top:0;z-index:50;background:rgba(11,14,20,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;gap:6px;overflow-x:auto;padding:10px 20px;scrollbar-width:none}
+nav .wrap::-webkit-scrollbar{display:none}
+nav a{color:var(--muted);font-size:13.5px;white-space:nowrap;border:1px solid transparent;border-radius:8px;padding:5px 12px}
+nav a:hover{color:var(--text);border-color:var(--line);background:var(--panel);text-decoration:none}
+nav a.active{color:var(--cyan);border-color:#164e63;background:rgba(34,211,238,.07)}
+
+/* ---------- sections ---------- */
+main{padding:8px 0 60px}
+section{padding:44px 0 8px}
+h2{font-size:clamp(21px,3vw,28px);letter-spacing:-.3px;margin-bottom:6px}
+h2 .n{font-family:var(--mono);color:var(--dim);font-size:.7em;margin-right:10px;vertical-align:middle}
+.lead{color:var(--muted);max-width:820px;margin-bottom:22px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:16px}
+.card h3{font-size:17px;margin-bottom:10px}
+p+p{margin-top:12px}
+.note{border-left:3px solid var(--cyan);background:rgba(34,211,238,.06);border-radius:0 10px 10px 0;padding:12px 16px;color:var(--muted);font-size:14.5px;margin:14px 0}
+.note.warn{border-color:var(--amber);background:rgba(245,158,11,.07)}
+.note.danger{border-color:var(--red);background:rgba(248,113,113,.07)}
+.note b{color:var(--text)}
+
+/* ---------- flow diagram ---------- */
+.flow{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;justify-content:center;margin:26px 0 10px}
+.node{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;text-align:center;min-width:150px;flex:1;font-size:14px}
+.node small{display:block;color:var(--dim);font-size:12px;margin-top:4px;line-height:1.45}
+.node.hot{border-color:#155e75;background:rgba(34,211,238,.07)}
+.node .emo{font-size:22px;display:block;margin-bottom:4px}
+.farr{align-self:center;color:var(--dim);font-size:20px}
+.flow-final{display:flex;flex-direction:column;gap:10px;flex:1;min-width:220px}
+@media (max-width:720px){.farr{transform:rotate(90deg)}}
+.caption{text-align:center;color:var(--dim);font-size:13px;margin-top:6px}
+
+/* ---------- tables ---------- */
+table{width:100%;border-collapse:collapse;font-size:14.5px;margin:10px 0 6px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.4px}
+td b{color:var(--cyan)}
+.ok{color:var(--green)} .mid{color:var(--amber)} .bad{color:var(--red)}
+.tblwrap{overflow-x:auto}
+
+/* ---------- steps ---------- */
+.step{display:flex;gap:18px;margin-bottom:18px}
+.stepnum{flex:0 0 44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:18px;background:linear-gradient(135deg,rgba(34,211,238,.18),rgba(167,139,250,.18));border:1px solid var(--line);color:var(--cyan)}
+.stepbody{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 22px}
+.stepbody h3{font-size:16.5px;margin-bottom:8px}
+.stepbody ul{margin:8px 0 0 18px;color:var(--muted)}
+.stepbody li{margin:5px 0}
+.stepbody li b{color:var(--text)}
+
+/* ---------- calculator ---------- */
+.calc{display:grid;grid-template-columns:1.1fr 1fr;gap:18px}
+@media (max-width:820px){.calc{grid-template-columns:1fr}}
+.field{margin-bottom:16px}
+.field label{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin-bottom:7px}
+.field label output{font-family:var(--mono);color:var(--cyan)}
+select,input[type=range]{width:100%;accent-color:var(--cyan)}
+select{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:14.5px}
+select:focus{outline:1px solid var(--cyan)}
+input[type=range]{height:26px}
+.result{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:20px 22px;display:flex;flex-direction:column}
+.total{font-family:var(--mono);font-size:clamp(38px,6vw,54px);font-weight:700;line-height:1;letter-spacing:-1px}
+.total small{font-size:.4em;color:var(--dim);font-weight:400}
+.verdict{border-radius:9px;padding:8px 14px;margin:12px 0;font-size:14px;display:inline-block}
+.v-ok{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.3)}
+.v-mid{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
+.v-bad{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+.syll{color:var(--muted);font-size:14px;margin-top:auto}
+.bar{display:flex;height:16px;border-radius:8px;overflow:hidden;margin:14px 0 6px;border:1px solid var(--line)}
+.bar div{height:100%}
+.b-chunk{background:var(--cyan)} .b-infer{background:var(--violet)} .b-driver{background:var(--amber)} .b-out{background:var(--green)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* ---------- DAF demo ---------- */
+.daf{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:820px){.daf{grid-template-columns:1fr}}
+.btn{font:inherit;font-weight:600;border-radius:10px;padding:11px 20px;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text);transition:filter .15s}
+.btn:hover{filter:brightness(1.15)}
+.btn.primary{background:linear-gradient(90deg,#0891b2,#7c3aed);border-color:transparent}
+.btn.stop{background:rgba(248,113,113,.14);border-color:rgba(248,113,113,.4);color:var(--red)}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+#dafStatus{font-size:14px;color:var(--muted);min-height:44px;border:1px dashed var(--line);border-radius:10px;padding:10px 14px}
+#dafStatus.err{color:var(--red);border-color:rgba(248,113,113,.4)}
+canvas{width:100%;height:70px;display:block;background:var(--panel2);border:1px solid var(--line);border-radius:10px;margin-top:14px}
+
+/* ---------- misc ---------- */
+.links{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:6px}
+.lcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px}
+.lcard b{display:block;margin-bottom:3px}
+.lcard span{color:var(--muted);font-size:13px}
+footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--dim);font-size:13.5px;text-align:center}
+footer .wrap{display:flex;flex-direction:column;gap:6px;align-items:center}
+.kbd{font-family:var(--mono);font-size:.85em;background:#1a2234;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 7px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>Голос-подменщик: <span class="grad">real-time voice conversion</span> за один вечер</h1>
+    <p class="sub">Твой голос подавляется на входе компьютера, и наружу — в Discord, Zoom, игру или стрим — идёт уже другой голос. Разбираем сборку «Вариант Б» на open source: w-okada + RVC + VB-Cable, с калькулятором задержки и живым демо эффекта отложенной слуховой обратной связи.</p>
+    <div class="badges">
+      <span class="badge">стек: <b>open source</b></span>
+      <span class="badge">задержка: <b>~90–300 мс</b></span>
+      <span class="badge">железо: <b>GPU ≥ 4 ГБ VRAM</b></span>
+      <span class="badge">демо: <b>Web Audio API</b></span>
+      <span class="badge">платформа: <b>Windows 10/11</b></span>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <div class="wrap">
+    <a href="#how">Как работает</a>
+    <a href="#parts">Что понадобится</a>
+    <a href="#steps">Сборка · 6 шагов</a>
+    <a href="#calc">Калькулятор задержки</a>
+    <a href="#daf">DAF-демо</a>
+    <a href="#trouble">Грабли</a>
+    <a href="#hybrid">Гибриды и Seed-VC</a>
+    <a href="#ethics">Этика и закон</a>
+  </div>
+</nav>
+
+<main>
+<div class="wrap">
+
+<!-- ================= HOW ================= -->
+<section id="how">
+  <h2><span class="n">01</span>Как течёт сигнал</h2>
+  <p class="lead">Ключ ко всей схеме — <b>виртуальный микрофон</b>. Приложения никогда не узнают о существовании твоего настоящего микрофона: они видят только «CABLE Output», в который уже пишет обработанный голос.</p>
+
+  <div class="card">
+    <div class="flow">
+      <div class="node"><span class="emo">🎤</span>Микрофон<small>физический, твой</small></div>
+      <div class="farr">→</div>
+      <div class="node hot"><span class="emo">⚙️</span>RTVC-движок<small>w-okada + RVC-модель<br>GPU, 90–300 мс</small></div>
+      <div class="farr">→</div>
+      <div class="flow-final">
+        <div class="node"><span class="emo">🎧</span>Наушники<small>мониторинг: только новый голос</small></div>
+        <div class="node"><span class="emo">🔀</span>CABLE Output<small>виртуальный микрофон в Discord / Zoom / игру</small></div>
+      </div>
+    </div>
+    <p class="caption">Оригинал наружу не выходит вообще — это архитектурная гарантия, а не настройка.</p>
+  </div>
+
+  <div class="note"><b>Внутри движка.</b> Энкодер (HuBERT / ContentVec) отделяет «что сказано» от «кем сказано»: фонетический контент очищается от тембра. К контенту пришивается эмбеддинг целевого голоса, правится высота тона (F0) и форманты, и быстрый вокодер собирает звук обратно. Слог живёт 150–300 мс — конвертер успевает за ним с отставанием примерно в один слог.</div>
+
+  <div class="note warn"><b>Два честных нюанса.</b> 1) Костная проводимость: полностью заглушить собственный голос в собственных ушах невозможно физически — ты всегда чуть-чуть слышишь себя «изнутри черепа». Максимум достижимого: в наушниках только новый голос, свой остаётся глухим фоном. 2) Мониторинг приходит с задержкой — это эффект DAF, к нему мозг адаптируется (см. демо ниже).</div>
+</section>
+
+<!-- ================= PARTS ================= -->
+<section id="parts">
+  <h2><span class="n">02</span>Что понадобится</h2>
+  <p class="lead">Всё бесплатно. Единственная серьёзная инвестиция — наличие NVIDIA-видеокарты: на CPU задержка взлетает до 10–20 секунд, и живая речь становится невозможной.</p>
+
+  <div class="card">
+    <h3>Железо</h3>
+    <div class="tblwrap"><table>
+      <tr><th>Компонент</th><th>Минимум</th><th>Комфорт</th></tr>
+      <tr><td><b>GPU</b></td><td class="mid">GTX 1060 6 ГБ</td><td class="ok">RTX 3050 6 ГБ и выше — с запасом</td></tr>
+      <tr><td><b>VRAM</b></td><td class="mid">4 ГБ</td><td class="ok">6–8 ГБ (RVC + мониторинг + игра одновременно)</td></tr>
+      <tr><td><b>ОС</b></td><td>Windows 10</td><td class="ok">Windows 11</td></tr>
+      <tr><td><b>Наушники</b></td><td class="mid">любые вкладыши</td><td class="ok">закрытые накладные (DT 770, ATH-M50x) — меньше подтекания звука</td></tr>
+      <tr><td><b>Микрофон</b></td><td colspan="2">любой, включая гарнитурный — модель прощает</td></tr>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h3>Софт</h3>
+    <div class="links">
+      <div class="lcard"><b>w-okada voice-changer</b><span>сам движок реального времени, открытый код</span></div>
+      <div class="lcard"><b>RVC-модель голоса</b><span>готовая модель сообщества или своя, обученная на 10–30 мин записи</span></div>
+      <div class="lcard"><b>Seed-VC</b><span>zero-shot: голос из сэмпла 1–30 с без обучения</span></div>
+      <div class="lcard"><b>VB-Cable</b><span>виртуальный аудиокабель — «фейковый микрофон»</span></div>
+      <div class="lcard"><b>VoiceMeeter Banana</b><span>альтернатива CABLE с микшером и роутингом</span></div>
+      <div class="lcard"><b>ASIO-драйвер</b><span>панель твоей аудиокарты или ASIO4ALL — минус 100–200 мс</span></div>
+    </div>
+    <p style="margin-top:14px;color:var(--muted);font-size:14px">Прямые ссылки на релизы и репозитории — в <code>README.md</code> этого проекта и в шагах ниже.</p>
+  </div>
+</section>
+
+<!-- ================= STEPS ================= -->
+<section id="steps">
+  <h2><span class="n">03</span>Сборка: шесть шагов, один вечер</h2>
+  <p class="lead">Порядок важен: сначала кабель, потом движок, потом голос, и только в конце — Discord.</p>
+
+  <div class="step"><div class="stepnum">1</div><div class="stepbody">
+    <h3>Виртуальный микрофон: VB-Cable</h3>
+    <ul>
+      <li>Скачай установщик с официального сайта <b>vb-audio.com</b> (раздел Cable) — бесплатно, регистрация не нужна.</li>
+      <li>Установи от администратора и <b>перезагрузись</b> — без этого девайс не поднимется.</li>
+      <li>Проверка: в настройках звука Windows появились «CABLE Input» (выход) и «CABLE Output» (микрофон).</li>
+    </ul>
+  </div></div>
+
+  <div class="step"><div class="stepnum">2</div><div class="stepbody">
+    <h3>Движок: w-okada voice-changer</h3>
+    <ul>
+      <li>На странице релизов репозитория <code>w-okada/voice-changer</code> возьми сборку <b>для NVIDIA CUDA</b> (в имени файла — <code>cuda</code> / <code>nvidia</code>).</li>
+      <li>Распакуй в путь <b>без кириллицы и пробелов</b> (например <code>D:\vc\</code>), запусти <code>start_http.bat</code>.</li>
+      <li>Откроется панель по адресу <code>http://localhost:18888</code> — это пульт управления.</li>
+    </ul>
+  </div></div>
+
+  <div class="step"><div class="stepnum">3</div><div class="stepbody">
+    <h3>Голос: модель</h3>
+    <ul>
+      <li><b>Вариант «быстро»:</b> готовая RVC-модель сообщества — файлы <code>.pth</code> + <code>.index</code>. Ищи по запросу «RVC voice models» на тематических площадках сообщества.</li>
+      <li><b>Вариант «свой»:</b> обучение в RVC WebUI на 10–30 минутах чистой записи одного голоса — лучшее качество и никаких вопросов о правах.</li>
+      <li><b>Вариант «без обучения»:</b> <b>Seed-VC</b> в real-time режиме — клонируй голос из сэмпла 1–30 с. Задержка выше (~300 мс алгоритмической + ~100 мс девайсной), зато ноль подготовки.</li>
+      <li>Загрузи модель в w-okada: секция <b>MODEL</b> → выбор/перетаскивание <code>.pth</code>.</li>
+    </ul>
+  </div></div>
+
+  <div class="step"><div class="stepnum">4</div><div class="stepbody">
+    <h3>Маршрутизация: свой голос — внутрь, чужой — наружу</h3>
+    <ul>
+      <li><b>Input</b> = твой физический микрофон.</li>
+      <li><b>Output (мониторинг)</b> = твои наушники — слышишь только новый голос.</li>
+      <li><b>Дополнительный вывод</b> = <b>CABLE Input</b> — обработанный голос уходит в виртуальный микрофон.</li>
+      <li><b>Чанк</b> 256–512 сэмплов, <b>extra/crossfade</b> 2–2.5, <b>f0 detector</b> RMVPE.</li>
+      <li>Если у аудиокарты есть ASIO-панель — включи ASIO. <span class="bad">MME</span> съедает +150–200 мс просто так.</li>
+    </ul>
+  </div></div>
+
+  <div class="step"><div class="stepnum">5</div><div class="stepbody">
+    <h3>Discord / Zoom / игра</h3>
+    <ul>
+      <li>Устройством ввода выбери <b>CABLE Output</b> — не физический микрофон.</li>
+      <li><b>Выключи</b> эхоподавление, шумоподавление (Krisp) и авточувствительность: они калечат синтетический голос, он звучит «роботом».</li>
+      <li>В Zoom: Настройки → Аудио → «Подавление фонового шума» → <b>Выкл</b> (или «Ручное»).</li>
+    </ul>
+  </div></div>
+
+  <div class="step"><div class="stepnum">6</div><div class="stepbody">
+    <h3>Тест и тюнинг</h3>
+    <ul>
+      <li>В Discord: «Проверка микрофона» — должен звучать только новый голос.</li>
+      <li>Цель по задержке мониторинга: <b>&lt; 150 мс</b> — считай её в калькуляторе ниже.</li>
+      <li>Потренируй мозг на DAF-демо ниже: первые минуты речь спотыкается — это нормально и проходит.</li>
+    </ul>
+  </div></div>
+</section>
+
+<!-- ================= CALC ================= -->
+<section id="calc">
+  <h2><span class="n">04</span>Калькулятор задержки</h2>
+  <p class="lead">Упрощённая, но честная модель цепочки «микрофон → движок → наушники». Подставь свои настройки из w-okada и посмотри, с чем будет жить твой мозг.</p>
+
+  <div class="card">
+    <div class="calc">
+      <div>
+        <div class="field">
+          <label>Частота дискретизации</label>
+          <select id="sr">
+            <option value="48000" selected>48 000 Гц (рекомендуется)</option>
+            <option value="44100">44 100 Гц</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Размер чанка (сэмплов)</label>
+          <select id="chunk">
+            <option value="128">128 — минимум задержки, нужна мощная GPU</option>
+            <option value="256">256 — спортивный режим</option>
+            <option value="512" selected>512 — баланс (по умолчанию)</option>
+            <option value="1024">1024 — запас для слабой GPU</option>
+            <option value="2048">2048 — только если трещит на 1024</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Буфер чанков (extra / crossfade)</label>
+          <select id="cf">
+            <option value="1">1 — жёстко, возможны щелчки</option>
+            <option value="2" selected>2 — стандарт</option>
+            <option value="3">3 — плавно</option>
+            <option value="4">4 — очень плавно, +задержка</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Аудиодрайвер</label>
+          <select id="driver">
+            <option value="150">MME — «из коробки», тяжёлый</option>
+            <option value="30" selected>WASAPI — норма без ASIO</option>
+            <option value="5">ASIO — минимум (+отдельная панель)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Инференс на GPU <output id="inferOut">40 мс</output></label>
+          <input type="range" id="infer" min="10" max="150" value="40" step="5">
+        </div>
+        <div class="field">
+          <label>Выходной буфер мониторинга <output id="outOut">10 мс</output></label>
+          <input type="range" id="out" min="5" max="60" value="10" step="1">
+        </div>
+      </div>
+
+      <div class="result">
+        <div style="color:var(--muted);font-size:14px;margin-bottom:8px">Задержка мониторинга</div>
+        <div class="total"><span id="totalMs">—</span><small> мс</small></div>
+        <div><span class="verdict v-ok" id="verdict">—</span></div>
+        <div class="bar" id="bar">
+          <div class="b-chunk" id="sChunk"></div>
+          <div class="b-infer" id="sInfer"></div>
+          <div class="b-driver" id="sDriver"></div>
+          <div class="b-out" id="sOut"></div>
+        </div>
+        <div class="legend">
+          <span><i class="b-chunk"></i>чанк <b id="vChunk">—</b></span>
+          <span><i class="b-infer"></i>GPU <b id="vInfer">—</b></span>
+          <span><i class="b-driver"></i>драйвер <b id="vDriver">—</b></span>
+          <span><i class="b-out"></i>вых. буфер <b id="vOut">—</b></span>
+        </div>
+        <div class="syll" id="syll" style="margin-top:14px">—</div>
+        <div class="syll" style="font-size:13px;color:var(--dim)">Собеседник услышит то же + 20–60 мс сети — для него это незаметно: у него нет твоего эталона голоса.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= DAF ================= -->
+<section id="daf">
+  <h2><span class="n">05</span>DAF-демо: услышь свою задержку до сборки</h2>
+  <p class="lead">Твой микрофон возвращается в наушники с регулируемой задержкой — ровно тот эффект, который даёт мониторинг сконвертированного голоса. Проверь, с какой задержкой твоя речь начинает спотыкаться, и пойми, к чему готовиться.</p>
+
+  <div class="note danger"><b>⚠ Только в наушниках!</b> Если включить это на колонках, получишь петлю обратной связи — вой на всё здание. И включай, когда вокруг тихо: демо пропускает весь звук с микрофона.</div>
+
+  <div class="card">
+    <div class="daf">
+      <div>
+        <div class="field">
+          <label>Задержка возврата <output id="dafDelayOut">200 мс</output></label>
+          <input type="range" id="dafDelay" min="0" max="600" value="200" step="10">
+        </div>
+        <div class="btnrow">
+          <button class="btn primary" id="dafStartBtn">🎤 Включить микрофон</button>
+          <button class="btn stop" id="dafStopBtn" disabled>■ Стоп</button>
+        </div>
+        <div id="dafStatus">Микрофон выключен. Надень наушники, включи — и читай вслух фразу «раз-два-три-четыре-пять», меняя задержку ползунком.</div>
+        <p style="color:var(--dim);font-size:13px;margin-top:12px">Микрофон используется только локально в твоём браузере: никуда не отправляется и не записывается. Работает по HTTPS (эта страница) или на <code>localhost</code>.</p>
+      </div>
+      <div>
+        <canvas id="meter" width="600" height="70"></canvas>
+        <p style="color:var(--muted);font-size:14px;margin-top:12px"><b style="color:var(--text)">Шкала калибровки по ощущениям:</b></p>
+        <div class="tblwrap"><table>
+          <tr><th>Задержка</th><th>Что чувствуешь</th></tr>
+          <tr><td><span class="ok">0–50 мс</span></td><td>почти обычный сайд-тон, говорить легко</td></tr>
+          <tr><td><span class="mid">100–200 мс</span></td><td>лёгкий «хвост»; адаптация за минуты — режим стримеров</td></tr>
+          <tr><td><span class="bad">250–400 мс</span></td><td>речь спотыкается, слоги растягиваются; привыкание за дни</td></tr>
+          <tr><td><span class="bad">&gt; 400 мс</span></td><td>говорить всерьёз почти невозможно</td></tr>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note"><b>Почему так.</b> Эффект отложенной слуховой обратной связи (delayed auditory feedback) — психолингвистическое явление: когда мозг слышит собственную речь с запаздыванием, план говорения конфликтует с приходящим звуком. Обычной речью с 100–300 мс люди адаптируются за минуты; для пения и ритма планка жёстче — музыканты страдают уже на 20–30 мс, поэтому в студиях мониторинг почти мгновенный.</div>
+</section>
+
+<!-- ================= TROUBLE ================= -->
+<section id="trouble">
+  <h2><span class="n">06</span>Грабли и решения</h2>
+  <p class="lead">Пять проблем, на которые жалуются почти все, кто собирает такой стенд впервые.</p>
+  <div class="card">
+    <div class="tblwrap"><table>
+      <tr><th>Симптом</th><th>Причина и лечение</th></tr>
+      <tr><td><b>Задержка 10–20 секунд</b></td><td>Движок работает на CPU. Возьми сборку под CUDA и проверь, что драйвер NVIDIA свежий. На CPU живая речь невозможна в принципе.</td></tr>
+      <tr><td><b>Треск и обрывы</b></td><td>Чанк слишком мал для твоей GPU. Поднимай его шагами 512 → 1024 → 2048 или увеличь extra, пока не станет чисто.</td></tr>
+      <tr><td><b>Свист или вой</b></td><td>Петля: колонки + микрофон. Только наушники, без вариантов.</td></tr>
+      <tr><td><b>«Робот» у собеседника</b></td><td>Шумодав приложения калечит синтетический звук. В Discord выключи Krisp и эхоподавление, в Zoom — подавление шума.</td></tr>
+      <tr><td><b>Свой голос слышен вдобавок к новому</b></td><td>В приложении выбран физический микрофон вместо CABLE Output, либо открытый корпус наушников подтекает. Проверь маршрут и смени на закрытые.</td></tr>
+      <tr><td><b>Модель не загружается</b></td><td><code>.pth</code> и <code>.index</code> должны быть от одной версии RVC. Скачал пару от разных — найди согласованную.</td></tr>
+    </table></div>
+  </div>
+</section>
+
+<!-- ================= HYBRID ================= -->
+<section id="hybrid">
+  <h2><span class="n">07</span>Гибриды голосов и Seed-VC</h2>
+  <p class="lead">«40 % одного голоса + 60 % другого» — технически это смешивание эмбеддингов, и из коробки это не даёт никто. Что можно сделать сегодня.</p>
+  <div class="card">
+    <h3>Рабочие приёмы</h3>
+    <ul style="margin:8px 0 0 18px;color:var(--muted)">
+      <li style="margin:6px 0"><b style="color:var(--text)">Транспонирование (transpose)</b> — сдвиг высоты тона в полутонах в w-okada: мужской ↔ женский регистр работает уже из коробки. Начни с ±12.</li>
+      <li style="margin:6px 0"><b style="color:var(--text)">Смешивание эмбеддингов</b> — усредни векторы целевых голосов с весами в собственном скрипте пайплайна (RVC даёт к этому доступ). Стабильнее всего выходит на голосах близкого регистра.</li>
+      <li style="margin:6px 0"><b style="color:var(--text)">Seed-VC zero-shot</b> — сэмпл голоса 1–30 с без обучения: самый быстрый способ «примерить» голос и понять, твой ли это тембр, прежде чем обучать полноценную RVC-модель.</li>
+      <li style="margin:6px 0"><b style="color:var(--text)">Формантный сдвиг</b> — меняет «размер горла», оставляя высоту тона: ещё одна ручка для гибридов.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= ETHICS ================= -->
+<section id="ethics">
+  <h2><span class="n">08</span>Этика и закон</h2>
+  <div class="card">
+    <ul style="margin:2px 0 0 18px;color:var(--muted)">
+      <li style="margin:7px 0"><b style="color:var(--text)">Клонируй только свой голос</b> или голос с явного письменного разрешения владельца. Голос — персональная характеристика, в большинстве юрисдикций его подмена для обмана уже повод для суда.</li>
+      <li style="margin:7px 0"><b style="color:var(--text)">Не обманывай собеседника</b>, если от «кто говорит» зависит решение — деньги, доступ, доверие. Это уже не звуковой эксперимент, а мошенничество.</li>
+      <li style="margin:7px 0"><b style="color:var(--text)">Помечай синтетику</b> при публикации записей: слушатель имеет право знать, что голос сгенерирован.</li>
+      <li style="margin:7px 0"><b style="color:var(--text)">Игры и стримы</b> — нормальный сценарий: меняй голос на персонажа, это часть жанра. Скрываться имеет смысл только от токсиков, а не от модераторов.</li>
+    </ul>
+  </div>
+</section>
+
+</div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>Единый самодостаточный HTML — без сборки, фреймворков и внешних скриптов.</div>
+    <div>Исходники: <a href="https://github.com/Genocide12/realtime-voice-changer" id="repoLink">Genocide12/realtime-voice-changer</a></div>
+  </div>
+</footer>
+
+<script>
+"use strict";
+var $ = function(s){ return document.querySelector(s); };
+
+/* ============ активный пункт навигации ============ */
+(function(){
+  var links = document.querySelectorAll("nav a");
+  var map = {};
+  links.forEach(function(a){ map[a.getAttribute("href").slice(1)] = a; });
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(a){ a.classList.remove("active"); });
+        var a = map[e.target.id]; if(a) a.classList.add("active");
+      }
+    });
+  }, {rootMargin:"-30% 0px -60% 0px"});
+  document.querySelectorAll("main section").forEach(function(s){ obs.observe(s); });
+})();
+
+/* ============ калькулятор задержки ============ */
+function recalc(){
+  var sr      = +$("#sr").value;
+  var chunk   = +$("#chunk").value;
+  var cf      = +$("#cf").value;
+  var driver  = +$("#driver").value;
+  var infer   = +$("#infer").value;
+  var out     = +$("#out").value;
+
+  $("#inferOut").textContent = infer + " мс";
+  $("#outOut").textContent   = out + " мс";
+
+  var chunkMs = chunk * cf / sr * 1000;
+  var total = chunkMs + infer + driver + out;
+
+  $("#totalMs").textContent = Math.round(total);
+
+  var v = $("#verdict");
+  var cls, txt;
+  if(total < 100){      cls = "verdict v-ok";  txt = "Комфортно — как обычная связь"; }
+  else if(total < 200){ cls = "verdict v-ok";  txt = "Стрим-стандарт: привыкание за минуты"; }
+  else if(total < 350){ cls = "verdict v-mid"; txt = "Заметно; привыкание за дни — уменьши чанк / поставь ASIO"; }
+  else{                 cls = "verdict v-bad"; txt = "Речь будет разваливаться: меньше чанк, ASIO, мощнее GPU"; }
+  v.className = cls; v.textContent = txt;
+
+  var parts = [
+    ["sChunk","vChunk", chunkMs ],
+    ["sInfer","vInfer", infer   ],
+    ["sDriver","vDriver", driver ],
+    ["sOut","vOut",     out     ]
+  ];
+  parts.forEach(function(p){
+    var w = Math.max(2, total ? (p[2]/total*100) : 0);
+    document.getElementById(p[0]).style.width = w + "%";
+    document.getElementById(p[1]).textContent = Math.round(p[2]) + " мс";
+  });
+
+  var syl = total / 200; /* средний слог ~200 мс */
+  $("#syll").innerHTML = total
+    ? "Отставание от собственной речи: <b>" + (syl < 1 ? "меньше слога" : "~" + (Math.round(syl*10)/10) + " слога") + "</b> (средний слог ≈ 200 мс)."
+    : "—";
+}
+["sr","chunk","cf","driver"].forEach(function(id){ $("#"+id).addEventListener("change", recalc); });
+["infer","out"].forEach(function(id){ $("#"+id).addEventListener("input", recalc); });
+recalc();
+
+/* ============ DAF-демо ============ */
+var dafCtx=null, dafStream=null, dafSrc=null, dafDelay=null, dafGain=null, dafAn=null;
+var dafOn=false, dafRaf=0;
+
+function dafStatus(msg, isErr){
+  var el = $("#dafStatus");
+  el.textContent = msg;
+  el.className = isErr ? "err" : "";
+}
+function setButtons(on){
+  $("#dafStartBtn").disabled = on;
+  $("#dafStopBtn").disabled = !on;
+}
+
+function drawMeter(){
+  if(!dafOn) return;
+  var c = $("#meter"), g = c.getContext("2d");
+  var data = new Uint8Array(dafAn.frequencyBinCount);
+  dafAn.getByteFrequencyData(data);
+  g.clearRect(0,0,c.width,c.height);
+  var bars = 48, step = Math.floor(data.length/bars);
+  for(var i=0;i<bars;i++){
+    var h = Math.pow(data[i*step]/255, 1.4) * (c.height-8);
+    g.fillStyle = i%6===0 ? "rgba(167,139,250,.85)" : "rgba(34,211,238,.75)";
+    g.fillRect(i*(c.width/bars)+2, c.height-h, (c.width/bars)-4, h);
+  }
+  dafRaf = requestAnimationFrame(drawMeter);
+}
+
+async function dafStart(){
+  if(dafOn) return;
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    dafStatus("Браузер не даёт доступ к микрофону (нужен HTTPS или localhost). Открой страницу по ссылке GitHub Pages.", true);
+    return;
+  }
+  try{
+    dafStream = await navigator.mediaDevices.getUserMedia({
+      audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:false }
+    });
+  }catch(e){
+    dafStatus("Микрофон недоступен: " + (e.name||"ошибка") + ". Разреши доступ в браузере и попробуй снова.", true);
+    return;
+  }
+  var AC = window.AudioContext || window.webkitAudioContext;
+  dafCtx = new AC();
+  await dafCtx.resume();
+  dafSrc = dafCtx.createMediaStreamSource(dafStream);
+  dafDelay = dafCtx.createDelay(2.0);
+  dafDelay.delayTime.value = (+$("#dafDelay").value)/1000;
+  dafGain = dafCtx.createGain(); dafGain.gain.value = 1.0;
+  dafAn = dafCtx.createAnalyser(); dafAn.fftSize = 512;
+  dafSrc.connect(dafDelay); dafDelay.connect(dafGain); dafGain.connect(dafAn); dafAn.connect(dafCtx.destination);
+  dafOn = true; setButtons(true);
+  dafStatus("Живьём: речь возвращается с задержкой " + $("#dafDelay").value + " мс. Читай вслух «раз-два-три-четыре-пять» и двигай ползунок.");
+  drawMeter();
+}
+
+function dafStop(){
+  if(!dafOn) return;
+  dafOn = false; setButtons(false);
+  cancelAnimationFrame(dafRaf);
+  var c = $("#meter"); c.getContext("2d").clearRect(0,0,c.width,c.height);
+  try{ dafStream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+  try{ dafCtx.close(); }catch(e){}
+  dafCtx=null; dafStream=null; dafSrc=null; dafDelay=null; dafGain=null; dafAn=null;
+  dafStatus("Микрофон выключен.");
+}
+
+$("#dafStartBtn").addEventListener("click", dafStart);
+$("#dafStopBtn").addEventListener("click", dafStop);
+$("#dafDelay").addEventListener("input", function(){
+  var ms = +this.value;
+  $("#dafDelayOut").textContent = ms + " мс";
+  if(dafOn && dafDelay){
+    dafDelay.delayTime.linearRampToValueAtTime(ms/1000, dafCtx.currentTime + 0.05);
+    dafStatus("Живьём: задержка " + ms + " мс. Слушай, как меняется плавность речи.");
+  }
+});
+</script>
+</body>
+</html>
