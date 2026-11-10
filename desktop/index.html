@@ -82,6 +82,8 @@ canvas.meter{width:100%;height:52px;display:block;background:var(--panel2);borde
 .pad .emo{font-size:21px}
 .pad b{font-size:12.5px;font-weight:600;text-align:center}
 .pad kbd{position:absolute;top:5px;right:5px;opacity:.6}
+.pad.listening{border-color:var(--amber);animation:padListen 1s ease-in-out infinite}
+@keyframes padListen{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.5)}50%{box-shadow:0 0 0 6px rgba(245,158,11,0)}}
 
 .pianoWrap{position:relative;height:170px;margin-top:4px;user-select:none;touch-action:none}
 .pkey{position:absolute;top:0;width:6.4%;height:100%;background:#eef2f7;border:1px solid #475569;border-radius:0 0 7px 7px;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px}
@@ -92,9 +94,38 @@ canvas.meter{width:100%;height:52px;display:block;background:var(--panel2);borde
 .pkey.black.down{background:#0e7490}
 
 footer{border-top:1px solid var(--line);padding:20px 0 34px;color:var(--dim);font-size:13px;text-align:center}
+
+/* ============ сплэш-экран загрузки ============ */
+#splash{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:radial-gradient(900px 500px at 20% -10%,rgba(34,211,238,.10),transparent 60%),radial-gradient(700px 400px at 85% 110%,rgba(167,139,250,.10),transparent 60%),var(--bg);transition:opacity .45s ease,visibility .45s}
+#splash.hide{opacity:0;visibility:hidden;pointer-events:none}
+.eq{display:flex;align-items:center;gap:7px;height:56px}
+.eq span{width:9px;border-radius:5px;background:linear-gradient(180deg,var(--cyan),var(--violet));animation:eqBounce 1.05s ease-in-out infinite}
+.eq span:nth-child(1){height:38%;animation-delay:0s}
+.eq span:nth-child(2){height:70%;animation-delay:.12s}
+.eq span:nth-child(3){height:100%;animation-delay:.24s}
+.eq span:nth-child(4){height:70%;animation-delay:.36s}
+.eq span:nth-child(5){height:38%;animation-delay:.48s}
+.eq span:nth-child(6){height:70%;animation-delay:.60s}
+.eq span:nth-child(7){height:100%;animation-delay:.72s}
+@keyframes eqBounce{0%,100%{transform:scaleY(.35);opacity:.55}50%{transform:scaleY(1);opacity:1}}
+#splashTitle{font-size:26px;font-weight:800;letter-spacing:-.3px}
+#splashTitle .grad{background:linear-gradient(90deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+#splashMsg{font-family:var(--mono);font-size:12.5px;color:var(--dim)}
+#splashBar{width:240px;height:4px;border-radius:99px;background:var(--panel2);overflow:hidden}
+#splashBar i{display:block;height:100%;width:40%;border-radius:99px;background:linear-gradient(90deg,var(--cyan),var(--violet));animation:barSlide 1.1s ease-in-out infinite}
+@keyframes barSlide{0%{transform:translateX(-110%)}100%{transform:translateX(290%)}}
+.spin{animation:spinPulse 1.6s ease-in-out infinite}
+@keyframes spinPulse{0%,100%{opacity:.6;transform:scale(.97)}50%{opacity:1;transform:scale(1)}}
 </style>
 </head>
 <body>
+
+<div id="splash">
+  <div class="eq"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <div id="splashTitle">Голос-подменщик <span class="grad">загружается…</span></div>
+  <div id="splashBar"><i></i></div>
+  <div id="splashMsg">готовим микрофон, эффекты и звуки</div>
+</div>
 
 <header>
   <div class="wrap">
@@ -109,6 +140,7 @@ footer{border-top:1px solid var(--line);padding:20px 0 34px;color:var(--dim);fon
     <button class="tbtn" data-tab="lab">🎛 Генератор звуков</button>
     <button class="tbtn" data-tab="synth">🎹 Синтезатор</button>
     <button class="tbtn" data-tab="tts">🗣 Речь</button>
+    <button class="tbtn" data-tab="neuro">🧠 Нейро-голос</button>
   </div>
 </nav>
 
@@ -130,6 +162,15 @@ footer{border-top:1px solid var(--line);padding:20px 0 34px;color:var(--dim);fon
       <div class="card">
         <h3>Голоса</h3>
         <div class="chips" id="presetChips"></div>
+      </div>
+      <div class="card">
+        <h3>Спеть системным голосом</h3>
+        <div class="toolbar" style="margin-bottom:8px;flex-wrap:wrap">
+          <select class="sel" id="singVoice" style="max-width:100%;min-width:220px"></select>
+          <button class="btn" id="singBtn">🎤 Спеть</button>
+        </div>
+        <textarea class="tta" id="singText" style="min-height:64px">Проверка голоса. Один два три.</textarea>
+        <span class="status" id="singStatus">озвучит текст выбранным голосом системы через текущие эффекты</span>
       </div>
       <div class="card">
         <h3>Мониторы</h3>
@@ -174,7 +215,7 @@ footer{border-top:1px solid var(--line);padding:20px 0 34px;color:var(--dim);fon
 <section id="tab-synth" class="tab">
   <div class="toolbar">
     <button class="btn" id="synthRec">● Запись</button>
-    <span class="status">играй мышкой или клавишами <kbd>Z</kbd> <kbd>S</kbd> <kbd>X</kbd> <kbd>D</kbd> <kbd>C</kbd> <kbd>V</kbd> <kbd>G</kbd> <kbd>B</kbd> <kbd>H</kbd> <kbd>N</kbd> <kbd>J</kbd> <kbd>M</kbd> · октава: <kbd>←</kbd>/<kbd>→</kbd></span>
+    <span class="status">играй мышкой или клавишами — белые: <kbd>Shift</kbd> <kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd> <kbd>B</kbd> <kbd>N</kbd> <kbd>M</kbd> <kbd>,</kbd> <kbd>.</kbd> <kbd>/</kbd> <kbd>Shift→</kbd> <kbd>Num1</kbd> <kbd>Num2</kbd> <kbd>Num3</kbd> · чёрные: <kbd>A</kbd>–<kbd>'</kbd> · октава: <kbd>←</kbd>/<kbd>→</kbd></span>
   </div>
 
   <div class="card">
@@ -209,10 +250,54 @@ footer{border-top:1px solid var(--line);padding:20px 0 34px;color:var(--dim);fon
     <h3>Текст</h3>
     <textarea class="tta" id="ttsText">Привет! Я умею говорить любым голосом, который установлен в системе.</textarea>
     <h3>Голос и подача</h3>
-    <div class="toolbar" style="margin-bottom:8px">
-      <select class="sel" id="ttsVoice" style="max-width:100%"></select>
+    <div class="toolbar" style="margin-bottom:8px;flex-wrap:wrap">
+      <select class="sel" id="ttsVoice" style="max-width:420px"></select>
+      <button class="btn" id="ttsPreview">Прослушать голос</button>
     </div>
     <div id="ttsSliders" class="grid3"></div>
+  </div>
+
+  <div class="card">
+    <h3>Эффекты речи (как в разделе «Голос»)</h3>
+    <div class="toolbar" style="margin-bottom:8px;flex-wrap:wrap">
+      <label style="font-size:12.5px;color:var(--muted)">Пресет:</label>
+      <select class="sel" id="ttsPreset"></select>
+      <button class="btn" id="ttsPresetRnd">🎲 Рандом</button>
+    </div>
+    <div id="ttsFxPitch" class="grid3"></div>
+    <div class="sect">эффекты</div>
+    <div id="ttsFxFx" class="grid3"></div>
+    <div class="sect">пространство</div>
+    <div id="ttsFxSpace" class="grid3"></div>
+    <div class="sect">тон и уровень</div>
+    <div id="ttsFxTone" class="grid3"></div>
+  </div>
+</section>
+
+<!-- ================= НЕЙРО-ГОЛОС ================= -->
+<section id="tab-neuro" class="tab">
+  <div class="toolbar">
+    <button class="btn primary" id="neuroStart">🚀 Запустить движок</button>
+    <button class="btn stop" id="neuroStopBtn" disabled>■ Остановить</button>
+    <button class="btn" id="neuroOpen">Открыть интерфейс движка</button>
+    <span class="status" id="neuroStatus">статус: неизвестен</span>
+  </div>
+
+  <div class="card">
+    <h3>Что это</h3>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:12px">
+      Нейро-голос — настоящая ИИ-подмена голоса (клонирование тембра по образцу).
+      Первый запуск скачает и установит движок <b>w-okada voice-changer</b> (~1 ГБ, нужен интернет),
+      дальше он стартует локально на этом компьютере. Модели (.pth) скачиваются в самом движке.
+      Обычные эффекты вкладки «Голос» работают сразу и без этого.
+    </p>
+    <h3>Журнал движка</h3>
+    <pre id="neuroLog" style="font-family:var(--mono);font-size:12px;line-height:1.5;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:12px;max-height:220px;overflow:auto;color:#9fb3c8;white-space:pre-wrap">…</pre>
+  </div>
+
+  <div class="card" id="neuroEmbedCard" style="display:none">
+    <h3>Интерфейс движка (встроен в окно программы)</h3>
+    <iframe id="neuroFrame" src="about:blank" style="width:100%;height:640px;border:1px solid var(--line);border-radius:10px;background:#fff"></iframe>
   </div>
 </section>
 
@@ -395,6 +480,19 @@ registerProcessor('vc-core', VCCore);
 "use strict";
 var $ = function(s){ return document.getElementById(s); };
 function O(id, txt){ var el = $(id); if(el) el.textContent = txt; }
+
+/* ============ сплэш-экран ============ */
+var SPLASH_STEPS = ["готовим микрофон, эффекты и звуки", "строим клавиатуру синтезатора", "подключаем системные голоса", "почти готово…"];
+var splashStep = 0, splashTimer = setInterval(function(){
+  splashStep = Math.min(splashStep + 1, SPLASH_STEPS.length - 1);
+  var m = $("splashMsg"); if(m) m.textContent = SPLASH_STEPS[splashStep];
+}, 500);
+function hideSplash(){
+  clearInterval(splashTimer);
+  var s = $("splash");
+  if(s && !s.classList.contains("hide")) s.classList.add("hide");
+}
+window.addEventListener("load", function(){ setTimeout(hideSplash, 700); });
 
 /* ============ вкладки ============ */
 document.querySelectorAll(".tbtn").forEach(function(b){
@@ -736,6 +834,110 @@ function toggleVoiceRec(){
   }
 }
 function stopVoiceRec(){ if(voiceRecActive && voiceRec) voiceRec.stop(); }
+
+/* ============ спеть системным голосом (через эффекты) ============ */
+var singVoices = [], singCtx = null;
+function fillSingVoices(){
+  fetch("/api/voices").then(function(r){ return r.json(); }).then(function(d){
+    singVoices = d.voices || [];
+    var sel = $("singVoice");
+    sel.innerHTML = "";
+    if(singVoices.length === 0){
+      var o = document.createElement("option");
+      o.textContent = "нет системных голосов (десктоп-версия)";
+      sel.appendChild(o);
+      sel.disabled = true;
+      return;
+    }
+    singVoices.forEach(function(v){
+      var opt = document.createElement("option");
+      opt.value = v.name;
+      var extra = [];
+      if(v.lang) extra.push(v.lang);
+      if(v.gender) extra.push(v.gender === "Female" ? "жен" : v.gender === "Male" ? "муж" : v.gender);
+      opt.textContent = v.name + (extra.length ? " (" + extra.join(", ") + ")" : "");
+      sel.appendChild(opt);
+    });
+  }).catch(function(){
+    var sel = $("singVoice");
+    sel.innerHTML = "";
+    var o = document.createElement("option");
+    o.textContent = "недоступно в веб-версии";
+    sel.appendChild(o);
+    sel.disabled = true;
+  });
+}
+fillSingVoices();
+
+$("singBtn").addEventListener("click", async function(){
+  var btn = this;
+  if($("singVoice").disabled) return;
+  var text = $("singText").value.trim();
+  if(!text) return;
+  btn.disabled = true;
+  O("singStatus", "генерирую голос…");
+  try{
+    var resp = await fetch("/api/tts", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ text: text, voice: $("singVoice").value, rate: 1, pitch: 1, volume: 1 })
+    });
+    if(!resp.ok) throw new Error((await resp.text()).replace("tts failed: ", ""));
+    var buf = await resp.arrayBuffer();
+
+    // контекст: используем активный голосовой, чтобы шли текущие эффекты
+    if(voiceOn && voiceCtx){
+      var audio = await voiceCtx.decodeAudioData(buf);
+      var src = voiceCtx.createBufferSource();
+      src.buffer = audio;
+      src.connect(worklet); // сразу на вход DSP-цепочки
+      src.start();
+      O("singStatus", "пою через текущие эффекты…");
+      src.onended = function(){ O("singStatus", "готово"); btn.disabled = false; };
+    } else {
+      // микрофон выключен: играем через отдельную копию цепочки
+      if(!singCtx){
+        singCtx = new AC();
+        var url = URL.createObjectURL(new Blob([$("vcWorklet").textContent], {type:"application/javascript"}));
+        await singCtx.audioWorklet.addModule(url);
+      }
+      await singCtx.resume();
+      var audio = await singCtx.decodeAudioData(buf);
+      var src = singCtx.createBufferSource();
+      src.buffer = audio;
+      // мини-цепочка с текущими настройками
+      var w = new AudioWorkletNode(singCtx, "vc-core", {outputChannelCount:[1]});
+      var wp = function(n){ return w.parameters.get(n); };
+      wp("ratio").value = Math.pow(2, st.semi/12);
+      wp("auto").value = st.auto;
+      wp("autoSemi").value = st.semi;
+      wp("ringFreq").value = st.ringFreq; wp("ringMix").value = st.ringMix;
+      wp("drive").value = st.drive; wp("bits").value = st.bits;
+      wp("down").value = st.down; wp("gate").value = 0; // гейт не нужен: это файл
+      var hp = singCtx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = Math.max(20, st.hp);
+      var lp = singCtx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = st.lp;
+      var g = singCtx.createGain(); g.gain.value = st.vol;
+      var comp = singCtx.createDynamicsCompressor();
+      var conv = singCtx.createConvolver(); conv.buffer = makeIR(singCtx, st.revSize, 2.4);
+      var revWet = singCtx.createGain(); revWet.gain.value = st.rev*1.6;
+      var echoD = singCtx.createDelay(1.0); echoD.delayTime.value = st.echoTime/1000;
+      var echoFb = singCtx.createGain(); echoFb.gain.value = st.echoFb/100;
+      var echoWet = singCtx.createGain(); echoWet.gain.value = st.echoMix;
+      var outBus = singCtx.createGain();
+      src.connect(w); w.connect(hp); hp.connect(lp); lp.connect(g); g.connect(outBus);
+      lp.connect(conv); conv.connect(revWet); revWet.connect(outBus);
+      g.connect(echoD); echoD.connect(echoFb); echoFb.connect(echoD);
+      echoD.connect(echoWet); echoWet.connect(outBus);
+      outBus.connect(comp); comp.connect(singCtx.destination);
+      src.start();
+      O("singStatus", "пою через текущие эффекты…");
+      src.onended = function(){ O("singStatus", "готово"); btn.disabled = false; };
+    }
+  }catch(err){
+    O("singStatus", "ошибка: " + (err.message || err), true);
+    btn.disabled = false;
+  }
+});
 
 /* ============ пресеты ============ */
 function markChip(name){
@@ -1167,25 +1369,97 @@ var PAD_LIST = [
   ["cricket","🦗","Сверчок"], ["cat","🐈","Мяу"], ["dog","🐕","Гав"], ["gong","🪘","Гонг"],
   ["engine","🚂","Мотор"], ["helicopter","🚁","Вертолёт"], ["steam","♨️","Пар"]
 ];
-var HOTKEYS = ["Digit1","Digit2","Digit3","Digit4","Digit5","Digit6","Digit7","Digit8","Digit9","Digit0",
-               "KeyQ","KeyW","KeyE","KeyR","KeyT","KeyY","KeyU","KeyI"];
+var DEFAULT_HOTKEYS = {
+  laser:"Digit1", boom:"Digit2", thunder:"Digit3", rain:"Digit4", wind:"Digit5", ocean:"Digit6",
+  fire:"Digit7", kick:"Digit8", snare:"Digit9", hihat:"Digit0", clap:"KeyQ", siren:"KeyW",
+  alarm:"KeyE", blips:"KeyR", dial:"KeyT", morse:"KeyY", metal:"KeyU", whoosh:"KeyI"
+};
 var KEYMAP = {};
-PAD_LIST.forEach(function(item, idx){
+var listeningPad = null; // пэд, ожидающий нажатие клавиши для привязки
+
+function keyLabel(code){
+  if(!code) return "";
+  return code.replace("Digit","").replace("Key","").replace("Numpad","Num")
+             .replace("ShiftLeft","LShift").replace("ShiftRight","RShift")
+             .replace("ArrowUp","↑").replace("ArrowDown","↓").replace("ArrowLeft","←").replace("ArrowRight","→");
+}
+function loadKeymap(){
+  var saved = {};
+  try{ saved = JSON.parse(localStorage.getItem("padKeymap") || "{}"); }catch(e){}
+  var map = {};
+  var used = {};
+  PAD_LIST.forEach(function(item){
+    var name = item[0];
+    var code = saved[name] !== undefined ? saved[name] : DEFAULT_HOTKEYS[name];
+    if(code && !used[code]){ map[name] = code; used[code] = name; }
+  });
+  return map;
+}
+function saveKeymap(){
+  var flat = {};
+  for(var name in KEYMAP) flat[name] = KEYMAP[name];
+  try{ localStorage.setItem("padKeymap", JSON.stringify(flat)); }catch(e){}
+}
+function refreshPadLabels(){
+  document.querySelectorAll(".pad").forEach(function(pad){
+    var name = pad.dataset.sound;
+    var old = pad.querySelector("kbd");
+    if(old) old.remove();
+    var code = KEYMAP[name];
+    if(code){
+      var k = document.createElement("kbd");
+      k.textContent = keyLabel(code);
+      pad.appendChild(k);
+    }
+  });
+}
+function code2Label(code){ return keyLabel(code); }
+
+PAD_LIST.forEach(function(item){
   var b = document.createElement("button");
   b.className = "pad";
   b.dataset.sound = item[0];
-  if(idx < HOTKEYS.length){
-    var k = document.createElement("kbd");
-    k.textContent = HOTKEYS[idx].replace("Digit","").replace("Key","");
-    b.appendChild(k);
-    KEYMAP[HOTKEYS[idx]] = item[0];
-  }
   var emo = document.createElement("span"); emo.className = "emo"; emo.textContent = item[1];
   var nm = document.createElement("b"); nm.textContent = item[2];
   b.appendChild(emo); b.appendChild(nm);
-  b.addEventListener("click", function(){ triggerPad(item[0]); });
+
+  var name = item[0];
+  var holdTimer = null;
+  b.addEventListener("pointerdown", function(){
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(function(){ startListen(name); }, 600);
+  });
+  function cancelHold(){ clearTimeout(holdTimer); }
+  b.addEventListener("pointerup", cancelHold);
+  b.addEventListener("pointerleave", cancelHold);
+  b.addEventListener("pointercancel", cancelHold);
+
+  b.addEventListener("click", function(){
+    if(listeningPad === name) return; // ждём клавишу, не играем
+    triggerPad(name);
+  });
   $("pads").appendChild(b);
 });
+KEYMAP = loadKeymap();
+refreshPadLabels();
+
+/* долгое нажатие → выбор клавиши; Esc — сбросить привязку */
+function startListen(name){
+  listeningPad = name;
+  document.querySelectorAll(".pad").forEach(function(p){ p.classList.remove("listening"); });
+  var pad = document.querySelector('.pad[data-sound="' + name + '"]');
+  if(pad) pad.classList.add("listening");
+  O("labStatus", "нажми кнопку для «" + padName(name) + "» (Esc — убрать привязку)");
+}
+function stopListen(){
+  listeningPad = null;
+  document.querySelectorAll(".pad").forEach(function(p){ p.classList.remove("listening"); });
+  O("labStatus", "35 генераторов · долгое нажатие на пэд — назначить горячую клавишу");
+}
+function padName(name){
+  for(var i=0;i<PAD_LIST.length;i++) if(PAD_LIST[i][0] === name) return PAD_LIST[i][2];
+  return name;
+}
 
 function triggerPad(name){
   ensureLab();
@@ -1203,6 +1477,24 @@ document.addEventListener("keydown", function(e){
   if(!$("tab-lab").classList.contains("active")) return;
   var t = e.target;
   if(t && (t.tagName === "INPUT" || t.tagName === "SELECT" || t.tagName === "TEXTAREA")) return;
+
+  // режим привязки горячей клавиши
+  if(listeningPad){
+    e.preventDefault();
+    if(e.code === "Escape"){
+      delete KEYMAP[listeningPad];
+      saveKeymap(); refreshPadLabels(); stopListen();
+      return;
+    }
+    // снять привязку с другого пэда, если клавиша занята
+    for(var other in KEYMAP){ if(KEYMAP[other] === e.code) delete KEYMAP[other]; }
+    KEYMAP[listeningPad] = e.code;
+    saveKeymap(); refreshPadLabels();
+    O("labStatus", "«" + padName(listeningPad) + "» → " + keyLabel(e.code));
+    stopListen();
+    return;
+  }
+
   var s = KEYMAP[e.code];
   if(s){ e.preventDefault(); triggerPad(s); }
 });
@@ -1326,56 +1618,85 @@ function noteOff(note){
   v.oscs.forEach(function(o){ o.stop(t + SYN.release + 0.06); });
 }
 
-/* клавиатура: 2 октавы */
-var WHITE_SEMIS = [0,2,4,5,7,9,11,12,14,16,17,19,21,23,24];
-var BLACK_DEF = [[0,1],[1,3],[3,6],[4,8],[5,10],[7,13],[8,15],[10,18],[11,20],[12,22]]; // [белая перед, полутон]
-var KEY_LABELS = ["Z","S","X","D","C","V","G","B","H","N","J","M",",","L",".",";","/"];
-var KEY_CODES = ["KeyZ","KeyS","KeyX","KeyD","KeyC","KeyV","KeyG","KeyB","KeyH","KeyN","KeyJ","KeyM","Comma","KeyL","Period","Semicolon","Slash"];
-var CODE2SEMI = {};
-KEY_CODES.forEach(function(code, i){ CODE2SEMI[code] = i; });
+/* клавиатура: полная раскладка.
+   Белые (15): LShift, Z X C V B N M , . / , RShift, Numpad1 2 3
+   Чёрные (11): A S D F G H J K L ; '
+   Латиница/русские буквы — физические кнопки, event.code не зависит от раскладки. */
+var WHITE_KEYS = [
+  {semi:0,  code:"ShiftLeft",    label:"LShift"},
+  {semi:2,  code:"KeyZ",         label:"Z"},
+  {semi:4,  code:"KeyX",         label:"X"},
+  {semi:5,  code:"KeyC",         label:"C"},
+  {semi:7,  code:"KeyV",         label:"V"},
+  {semi:9,  code:"KeyB",         label:"B"},
+  {semi:11, code:"KeyN",         label:"N"},
+  {semi:12, code:"KeyM",         label:"M"},
+  {semi:14, code:"Comma",        label:","},
+  {semi:16, code:"Period",       label:"."},
+  {semi:17, code:"Slash",        label:"/"},
+  {semi:19, code:"ShiftRight",   label:"RShift"},
+  {semi:21, code:"Numpad1",      label:"Num1"},
+  {semi:23, code:"Numpad2",      label:"Num2"},
+  {semi:24, code:"Numpad3",      label:"Num3"}
+];
+var BLACK_KEYS = [
+  {semi:1,  code:"KeyA",         label:"A"},
+  {semi:3,  code:"KeyS",         label:"S"},
+  {semi:6,  code:"KeyD",         label:"D"},
+  {semi:8,  code:"KeyF",         label:"F"},
+  {semi:10, code:"KeyG",         label:"G"},
+  {semi:13, code:"KeyH",         label:"H"},
+  {semi:15, code:"KeyJ",         label:"J"},
+  {semi:18, code:"KeyK",         label:"K"},
+  {semi:20, code:"KeyL",         label:"L"},
+  {semi:22, code:"Semicolon",    label:";"},
+  {semi:25, code:"Quote",        label:"'"}
+];
+var CODE2KEY = {};
+WHITE_KEYS.concat(BLACK_KEYS).forEach(function(k){ CODE2KEY[k.code] = k; });
 var keyEls = {};
 var codeNote = {};
 
 function buildPiano(){
   var piano = $("piano");
   piano.innerHTML = "";
+  keyEls = {};
   var base = 12 * (SYN.octave + 1);
-  var whiteW = 100 / WHITE_SEMIS.length;
-  WHITE_SEMIS.forEach(function(semi, i){
+  var whiteW = 100 / WHITE_KEYS.length;
+  WHITE_KEYS.forEach(function(k, i){
     var el = document.createElement("div");
     el.className = "pkey";
     el.style.left = (i * whiteW) + "%";
     el.style.width = whiteW + "%";
-    var note = base + semi;
-    if(i < KEY_LABELS.length){
-      var b = document.createElement("b"); b.textContent = KEY_LABELS[i];
-      el.appendChild(b);
-    }
-    el.addEventListener("pointerdown", function(e){ e.preventDefault(); noteOn(note); });
-    el.addEventListener("pointerup", function(){ noteOff(note); });
-    el.addEventListener("pointerleave", function(){ noteOff(note); });
+    var note = base + k.semi;
+    var b = document.createElement("b"); b.textContent = k.label;
+    el.appendChild(b);
+    bindKey(el, note);
     piano.appendChild(el);
     keyEls[note] = el;
   });
-  BLACK_DEF.forEach(function(def){
+  // чёрная клавиша стоит между соседними белыми: позиция = белая слева + полширины
+  var whiteIdxBySemi = {};
+  WHITE_KEYS.forEach(function(k, i){ whiteIdxBySemi[k.semi] = i; });
+  BLACK_KEYS.forEach(function(k){
     var el = document.createElement("div");
     el.className = "pkey black";
-    var left = (def[0] + 1) * whiteW - 2.1;
+    var left = (whiteIdxBySemi[k.semi - 1] + 1) * whiteW - 2.1;
     el.style.left = left + "%";
-    var note = base + def[1];
-    var li = KEY_CODES.indexOf(semi2code(def[1]));
-    if(li >= 0){
-      var b = document.createElement("b"); b.textContent = KEY_LABELS[li];
-      el.appendChild(b);
-    }
-    el.addEventListener("pointerdown", function(e){ e.preventDefault(); noteOn(note); });
-    el.addEventListener("pointerup", function(){ noteOff(note); });
-    el.addEventListener("pointerleave", function(){ noteOff(note); });
+    var note = base + k.semi;
+    var b = document.createElement("b"); b.textContent = k.label;
+    el.appendChild(b);
+    bindKey(el, note);
     piano.appendChild(el);
     keyEls[note] = el;
   });
 }
-function semi2code(semi){ return semi < KEY_CODES.length ? KEY_CODES[semi] : null; }
+function bindKey(el, note){
+  el.addEventListener("pointerdown", function(e){ e.preventDefault(); noteOn(note); });
+  el.addEventListener("pointerup", function(){ noteOff(note); });
+  el.addEventListener("pointerleave", function(){ noteOff(note); });
+  el.addEventListener("pointercancel", function(){ noteOff(note); });
+}
 buildPiano();
 $("synthOctave").addEventListener("input", function(){
   SYN.octave = parseFloat(this.value);
@@ -1387,10 +1708,10 @@ document.addEventListener("keydown", function(e){
   if(t && (t.tagName === "INPUT" || t.tagName === "SELECT" || t.tagName === "TEXTAREA")) return;
   if(e.code === "ArrowLeft"){ stepOctave(-1); e.preventDefault(); return; }
   if(e.code === "ArrowRight"){ stepOctave(1); e.preventDefault(); return; }
-  var semi = CODE2SEMI[e.code];
-  if(semi !== undefined){
+  var k = CODE2KEY[e.code];
+  if(k){
     e.preventDefault();
-    var note = 12 * (SYN.octave + 1) + semi;
+    var note = 12 * (SYN.octave + 1) + k.semi;
     codeNote[e.code] = note;
     noteOn(note);
     var el = keyEls[note]; if(el) el.classList.add("down");
@@ -1439,71 +1760,336 @@ $("synthRec").addEventListener("click", toggleSynthRec);
 
 /* ============ синтез речи ============ */
 var ttsOK = typeof speechSynthesis !== "undefined" && typeof SpeechSynthesisUtterance !== "undefined";
+var ttsSysOK = false; // есть ли серверный SAPI (десктоп-версия)
 mkSlider($("ttsSliders"), "ttsRate",   "Скорость",  0.5, 2, 0.05, 1,   function(v){ return "×" + v.toFixed(2); });
 mkSlider($("ttsSliders"), "ttsPitch",  "Тон",       0,   2, 0.05, 1,   function(v){ return "×" + v.toFixed(2); });
 mkSlider($("ttsSliders"), "ttsVolume", "Громкость", 0,   1, 0.05, 1,   fPct);
 
-function ttsStatus(msg, isErr){
-  var el = $("ttsStatus");
-  el.textContent = msg;
-  el.className = "status" + (isErr ? " err" : "");
-}
-function loadVoices(){
-  if(!ttsOK){
-    ttsStatus("синтез речи недоступен в этой среде", true);
-    return;
+/* пресеты и эффекты для речи (копия набора «Голоса») */
+var TTS_PRESET_NAMES = [
+  ["clean","Чистый"], ["robot","🤖 Робот"], ["monster","👹 Монстр"], ["demon","😈 Демон"],
+  ["squirrel","🐿 Белка"], ["fairy","🧚 Фея"], ["radio","📻 Радио"], ["phone","☎️ Телефон"],
+  ["ghost","👻 Призрак"], ["alien","🛸 Пришелец"], ["underwater","🌊 Под водой"], ["cave","🕳 Пещера"],
+  ["megaphone","📢 Мегафон"], ["whisper","🤫 Шёпот"], ["choir","👨‍🎤 Хор"], ["hybrid","🧬 Гибрид"],
+  ["bee","🐝 Пчела"], ["vader","🖤 Вейдер"], ["glitch","💾 Глитч"]
+];
+var ttsSt = presetFull("clean");
+var TTS_ID_MAP = {
+  semi:"ttsSemi", vibRate:"ttsVibRate", vibDepth:"ttsVibDepth",
+  ringMix:"ttsRingMix", ringFreq:"ttsRingFreq", drive:"ttsDrive",
+  bits:"ttsBits", down:"ttsDown", tremRate:"ttsTremRate", tremDepth:"ttsTremDepth", chorus:"ttsChorus",
+  rev:"ttsRev", revSize:"ttsRevSize", echoTime:"ttsEchoTime", echoFb:"ttsEchoFb", echoMix:"ttsEchoMix",
+  hp:"ttsHp", lp:"ttsLp", gate:"ttsGate", vol:"ttsVol"
+};
+(function buildTtsFx(){
+  function sl(parent, key, label, min, max, step, fmt){
+    var inp = mkSlider($(parent), TTS_ID_MAP[key], label, min, max, step, ttsSt[key], fmt, function(v){ ttsSt[key] = v; });
+    inp._fmt = fmt;
   }
-  var vs = speechSynthesis.getVoices();
+  sl("ttsFxPitch","semi","Полутоны",-24,24,1,stFmt.semi);
+  sl("ttsFxPitch","vibRate","Вибрато: скорость",0,10,0.1,stFmt.vibRate);
+  sl("ttsFxPitch","vibDepth","Вибрато: глубина",0,1,0.01,stFmt.vibDepth);
+  sl("ttsFxFx","ringMix","Ринг-модуляция",0,1,0.01,stFmt.ringMix);
+  sl("ttsFxFx","ringFreq","Частота ринга",5,400,1,stFmt.ringFreq);
+  sl("ttsFxFx","drive","Перегруз",0,1,0.01,stFmt.drive);
+  sl("ttsFxFx","bits","Битность",2,16,1,stFmt.bits);
+  sl("ttsFxFx","down","Прореживание",1,16,1,stFmt.down);
+  sl("ttsFxFx","tremRate","Тремоло: скорость",0,20,0.1,stFmt.tremRate);
+  sl("ttsFxFx","tremDepth","Тремоло: глубина",0,1,0.01,stFmt.tremDepth);
+  sl("ttsFxFx","chorus","Хор",0,1,0.01,stFmt.chorus);
+  sl("ttsFxSpace","rev","Реверб",0,1,0.01,stFmt.rev);
+  sl("ttsFxSpace","revSize","Размер зала",0.3,3,0.1,stFmt.revSize);
+  sl("ttsFxSpace","echoTime","Эхо: время",0,800,10,stFmt.echoTime);
+  sl("ttsFxSpace","echoFb","Эхо: затухание",0,85,1,fPct);
+  sl("ttsFxSpace","echoMix","Эхо: уровень",0,1,0.01,stFmt.echoMix);
+  sl("ttsFxTone","hp","НЧ-срез",20,500,5,stFmt.hp);
+  sl("ttsFxTone","lp","ВЧ-срез",600,16000,100,stFmt.lp);
+  sl("ttsFxTone","gate","Шумоглушитель",0,1,0.01,stFmt.gate);
+  sl("ttsFxTone","vol","Громкость выхода",0,1.5,0.05,stFmt.vol);
+})();
+TTS_PRESET_NAMES.forEach(function(item){
+  var opt = document.createElement("option");
+  opt.value = item[0]; opt.textContent = item[1];
+  $("ttsPreset").appendChild(opt);
+});
+function ttsApplyPreset(name){
+  var p = presetFull(name);
+  if(name === "random"){
+    p = {
+      semi: Math.round(-12 + Math.random()*24), vibRate: 1+Math.random()*8, vibDepth: Math.random()*0.6,
+      ringMix: Math.random()*0.6, ringFreq: 5+Math.random()*200, drive: Math.random()*0.7,
+      bits: [16,16,12,8,6,4][Math.floor(Math.random()*6)], down: [1,1,1,4,8][Math.floor(Math.random()*5)],
+      tremRate: 0.5+Math.random()*15, tremDepth: Math.random()*0.5, chorus: Math.random()*0.7,
+      rev: Math.random()*0.7, revSize: 0.4+Math.random()*2.4,
+      echoTime: Math.round(Math.random()*500), echoFb: Math.round(Math.random()*55), echoMix: Math.random()*0.5,
+      hp: Math.round(20+Math.random()*280), lp: Math.round(2500+Math.random()*13000), gate: 0, vol: 1
+    };
+  }
+  for(var k in p){ ttsSt[k] = p[k]; setSlider(TTS_ID_MAP[k], p[k]); }
+}
+$("ttsPreset").addEventListener("change", function(){ ttsApplyPreset(this.value); });
+$("ttsPresetRnd").addEventListener("click", function(){ ttsApplyPreset("random"); });
+
+/* ============ голоса: браузерные + системные SAPI (десктоп) ============ */
+var ttsVoices = []; // {name, lang, sapi}
+function fillTtsVoices(){
   var sel = $("ttsVoice");
   sel.innerHTML = "";
-  vs.forEach(function(v, i){
-    var opt = document.createElement("option");
-    opt.value = String(i);
-    opt.textContent = v.name + " (" + v.lang + ")";
-    sel.appendChild(opt);
+  var groups = {};
+  ttsVoices.forEach(function(v){
+    var key = v.sapi ? "Системные (SAPI)" : "Браузерные";
+    (groups[key] = groups[key] || []).push(v);
   });
-  if(vs.length === 0){
-    ttsStatus("голоса системы не найдены — доступен только тон и скорость по умолчанию", true);
-  } else {
-    ttsStatus("голосов в системе: " + vs.length);
+  Object.keys(groups).forEach(function(g){
+    if(groups[g].length === 0) return;
+    var og = document.createElement("optgroup");
+    og.label = g;
+    groups[g].forEach(function(v){
+      var opt = document.createElement("option");
+      opt.value = v.name + "|" + (v.sapi ? "1" : "0");
+      var extra = [];
+      if(v.lang) extra.push(v.lang);
+      if(v.gender) extra.push(v.gender === "Female" ? "жен" : v.gender === "Male" ? "муж" : v.gender);
+      opt.textContent = v.name + (extra.length ? " (" + extra.join(", ") + ")" : "");
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
+  });
+  ttsStatus("голосов доступно: " + ttsVoices.length);
+}
+function collectVoices(){
+  ttsVoices = [];
+  if(ttsOK){
+    try{
+      speechSynthesis.getVoices().forEach(function(v){
+        ttsVoices.push({name: v.name, lang: v.lang, sapi: false});
+      });
+    }catch(e){}
   }
+  // системные голоса с Go-сервера (только в десктоп-версии)
+  fetch("/api/voices").then(function(r){ return r.json(); }).then(function(d){
+    (d.voices || []).forEach(function(v){
+      // не дублируем те, что уже показал браузер
+      var dup = ttsVoices.some(function(x){ return x.name === v.name; });
+      if(!dup) ttsVoices.push({name: v.name, lang: v.lang, gender: v.gender, sapi: true});
+    });
+    ttsSysOK = (d.voices || []).length > 0;
+    fillTtsVoices();
+  }).catch(function(){ fillTtsVoices(); });
+  fillTtsVoices();
 }
 if(ttsOK){
-  loadVoices();
-  speechSynthesis.onvoiceschanged = loadVoices;
-  $("ttsSpeak").addEventListener("click", function(){
-    speechSynthesis.cancel();
-    var text = $("ttsText").value.trim();
-    if(!text) return;
+  collectVoices();
+  speechSynthesis.onvoiceschanged = collectVoices;
+}
+
+/* ============ воспроизведение речи с эффектами ============ */
+var ttsPlayer = null;
+function ttsChainStop(){
+  if(ttsPlayer){
+    try{ ttsPlayer.stop(); }catch(e){}
+    ttsPlayer.disconnect();
+    ttsPlayer = null;
+  }
+}
+function ttsStopAll(){
+  ttsChainStop();
+  if(ttsOK){
+    try{ speechSynthesis.cancel(); }catch(e){}
+  }
+  $("ttsStop").disabled = true;
+  $("ttsSpeak").disabled = false;
+  ttsStatus("остановлено");
+}
+/* строит DSP-цепь как в «Голосе», но на входе — источник TTS */
+function buildTtsChain(ctx, src){
+  var worklet = new AudioWorkletNode(ctx, "vc-core", {outputChannelCount:[1]});
+  var wp = function(n){ return worklet.parameters.get(n); };
+  var t = ctx.currentTime;
+  wp("ratio").value = Math.pow(2, ttsSt.semi/12);
+  wp("auto").value = 0;
+  wp("autoSemi").value = ttsSt.semi;
+  wp("ringFreq").value = ttsSt.ringFreq;
+  wp("ringMix").value = ttsSt.ringMix;
+  wp("drive").value = ttsSt.drive;
+  wp("bits").value = ttsSt.bits;
+  wp("down").value = ttsSt.down;
+  wp("gate").value = ttsSt.gate;
+  var hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = Math.max(20, ttsSt.hp);
+  var lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = ttsSt.lp;
+  var master = ctx.createGain(); master.gain.value = ttsSt.vol;
+  var comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -8; comp.ratio.value = 4;
+  var conv = ctx.createConvolver(); conv.buffer = makeIR(ctx, ttsSt.revSize, 2.4);
+  var revWet = ctx.createGain(); revWet.gain.value = ttsSt.rev*1.6;
+  var echoD = ctx.createDelay(1.0); echoD.delayTime.value = ttsSt.echoTime/1000;
+  var echoFb = ctx.createGain(); echoFb.gain.value = ttsSt.echoFb/100;
+  var echoWet = ctx.createGain(); echoWet.gain.value = ttsSt.echoMix;
+  var outBus = ctx.createGain();
+  var vib = ctx.createDelay(0.05); vib.delayTime.value = 0.006;
+  if(ttsSt.vibDepth > 0.001){
+    var lfo = ctx.createOscillator(); lfo.frequency.value = ttsSt.vibRate;
+    var lg = ctx.createGain(); lg.gain.value = ttsSt.vibDepth * 0.004;
+    lfo.connect(lg); lg.connect(vib.delayTime); lfo.start(); lfo.stop(ctx.currentTime + 3600);
+  }
+  src.connect(worklet);
+  worklet.connect(vib); vib.connect(hp); hp.connect(lp); lp.connect(master);
+  master.connect(outBus);
+  lp.connect(conv); conv.connect(revWet); revWet.connect(outBus);
+  master.connect(echoD); echoD.connect(echoFb); echoFb.connect(echoD);
+  echoD.connect(echoWet); echoWet.connect(outBus);
+  outBus.connect(comp); comp.connect(ctx.destination);
+  return worklet;
+}
+async function speakThroughChain(kind, done){
+  var text = $("ttsText").value.trim();
+  if(!text){ ttsStatus("введи текст", true); return; }
+  ttsStopAll();
+  var sel = $("ttsVoice").value.split("|");
+  var voiceName = sel[0], isSapi = sel[1] === "1";
+  function finish(msg, isErr){
+    $("ttsStop").disabled = true; $("ttsSpeak").disabled = false;
+    ttsStatus(msg, isErr);
+    if(done) done();
+  }
+
+  var ctx = new AC();
+  var url = URL.createObjectURL(new Blob([$("vcWorklet").textContent], {type:"application/javascript"}));
+  await ctx.audioWorklet.addModule(url);
+  await ctx.resume();
+  ttsPlayer = ctx;
+  var oldClose = ctx.close.bind(ctx);
+  ctx.stop = function(){ try{ oldClose(); }catch(e){} };
+  ttsPlayer.disconnect = function(){};
+
+  var src = null;
+  if(kind === "sapi" && ttsSysOK){
+    ttsStatus("генерирую системным голосом…");
+    var resp = await fetch("/api/tts", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        text: text, voice: voiceName,
+        rate: parseFloat($("ttsRate").value),
+        pitch: parseFloat($("ttsPitch").value),
+        volume: parseFloat($("ttsVolume").value)
+      })
+    });
+    if(!resp.ok){
+      var msg = "ошибка генерации";
+      try{ msg = (await resp.text()).replace("tts failed: ", ""); }catch(e){}
+      ttsStatus(msg, true);
+      $("ttsStop").disabled = true; $("ttsSpeak").disabled = false;
+      if(done) done();
+      return;
+    }
+    var buf = await resp.arrayBuffer();
+    var audio = await ctx.decodeAudioData(buf);
+    src = ctx.createBufferSource(); src.buffer = audio;
+  } else {
+    // браузерный TTS не даёт аудиопоток в Web Audio — используем системный если есть,
+    // иначе играем напрямую (без эффектов) через speechSynthesis
+    if(ttsSysOK){
+      return speakThroughChain("sapi", done);
+    }
+    if(!ttsOK){
+      ttsStatus("синтез речи недоступен в этой среде", true);
+      return;
+    }
     var u = new SpeechSynthesisUtterance(text);
     var vs = speechSynthesis.getVoices();
-    var vi = parseInt($("ttsVoice").value, 10);
-    if(vs[vi]) u.voice = vs[vi];
+    var v = vs.find(function(x){ return x.name === voiceName; }) || vs[0];
+    if(v) u.voice = v;
     u.rate = parseFloat($("ttsRate").value);
     u.pitch = parseFloat($("ttsPitch").value);
     u.volume = parseFloat($("ttsVolume").value);
-    u.onend = function(){
-      $("ttsStop").disabled = true;
-      ttsStatus("готово");
-    };
+    u.onend = function(){ finish("готово"); };
     u.onerror = function(e){
-      $("ttsStop").disabled = true;
-      ttsStatus("ошибка озвучивания: " + (e.error || "неизвестно"), true);
+      // «interrupted»/«canceled» от cancel() — это не ошибка, не пугаем
+      if(e.error === "interrupted" || e.error === "canceled"){
+        finish("остановлено");
+      } else {
+        finish("ошибка озвучивания: " + (e.error || "неизвестно"), true);
+      }
     };
     $("ttsStop").disabled = false;
-    ttsStatus("говорю…");
+    $("ttsSpeak").disabled = true;
     speechSynthesis.speak(u);
-  });
-  $("ttsStop").addEventListener("click", function(){
-    speechSynthesis.cancel();
-    $("ttsStop").disabled = true;
-    ttsStatus("остановлено");
-  });
-} else {
+    return;
+  }
+  ttsStatus("говорю с эффектами…");
+  buildTtsChain(ctx, src);
+  src.onended = function(){
+    finish("готово");
+    setTimeout(function(){ ttsChainStop(); }, 800);
+  };
+  $("ttsStop").disabled = false;
   $("ttsSpeak").disabled = true;
-  $("ttsStop").disabled = true;
+  src.start();
+}
+$("ttsSpeak").addEventListener("click", function(){ speakThroughChain("auto"); });
+$("ttsStop").addEventListener("click", ttsStopAll);
+$("ttsPreview").addEventListener("click", function(){
+  var keep = JSON.parse(JSON.stringify(ttsSt));
+  var keepPreset = $("ttsPreset").value;
+  ttsApplyPreset("clean");
+  speakThroughChain("auto", function after(){
+    for(var k in keep){ ttsSt[k] = keep[k]; setSlider(TTS_ID_MAP[k], keep[k]); }
+    $("ttsPreset").value = keepPreset;
+  });
+});
+if(!ttsOK && !location.protocol.match(/^https?:$|^file:/)){
   ttsStatus("синтез речи недоступен в этой среде", true);
 }
+
+/* ============ нейро-голос (десктоп: w-okada) ============ */
+var neuroTimer = 0;
+function neuroSetStatus(txt, isErr){
+  var el = $("neuroStatus");
+  el.textContent = txt;
+  el.className = "status" + (isErr ? " err" : "");
+}
+function neuroPoll(){
+  fetch("/api/neuro/status").then(function(r){ return r.json(); }).then(function(d){
+    neuroSetStatus("статус: " + ({
+      idle: "не запущен", installing: "устанавливается…", running: "работает", error: "ошибка"
+    })[d.status] || d.status);
+    var running = d.status === "running";
+    $("neuroStart").disabled = running || d.status === "installing";
+    $("neuroStopBtn").disabled = !running && d.status !== "installing";
+    var log = $("neuroLog");
+    if(d.log && d.log.length){
+      log.textContent = d.log.join("\n");
+      log.scrollTop = log.scrollHeight;
+    }
+    var card = $("neuroEmbedCard");
+    if(running){
+      card.style.display = "";
+      var fr = $("neuroFrame");
+      if(fr.dataset.src !== "1"){ fr.src = "http://127.0.0.1:18888/"; fr.dataset.src = "1"; }
+    } else {
+      card.style.display = "none";
+      $("neuroFrame").dataset.src = "";
+    }
+  }).catch(function(){
+    neuroSetStatus("недоступно в веб-версии (нужна программа)", true);
+    clearInterval(neuroTimer);
+  });
+}
+$("neuroStart").addEventListener("click", function(){
+  neuroSetStatus("статус: запускаю…");
+  fetch("/api/neuro/start", {method: "POST"}).catch(function(){
+    neuroSetStatus("недоступно в веб-версии (нужна программа)", true);
+  });
+});
+$("neuroStopBtn").addEventListener("click", function(){
+  fetch("/api/neuro/stop", {method: "POST"}).catch(function(){});
+});
+$("neuroOpen").addEventListener("click", function(){
+  window.open("http://127.0.0.1:18888/", "_blank");
+});
+neuroPoll();
+neuroTimer = setInterval(neuroPoll, 3000);
 </script>
 </body>
 </html>

@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"syscall"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -70,9 +71,14 @@ const (
 	mbIconError        = 0x10
 	hwndTop            = 0
 	swpNoZOrder        = 0x0004
+	colorBackground    = 14 // COLOR_BTNFACE+1: тёмная системная кисть фона
 )
 
 var cwUseDefault = uintptr(uint32(0x80000000)) // CW_USEDEFAULT
+
+// colorBrush — тёмная системная кисть фона окна (индекс COLOR_BACKGROUND+1),
+// чтобы до загрузки страницы не мигал белый экран.
+const colorBrush = uintptr(14 + 1)
 
 var (
 	appChromium *edge.Chromium
@@ -147,6 +153,7 @@ func runUI(url string) {
 		HIcon:         icon,
 		HIconSm:       icon,
 		LpszClassName: className,
+		HbrBackground: colorBrush, // тёмный фон, чтобы не мигал белый до загрузки страницы
 	}
 	procRegisterClassExW.Call(uintptr(unsafe.Pointer(&wc)))
 
@@ -181,10 +188,14 @@ func runUI(url string) {
 		_ = settings.PutAreDefaultContextMenusEnabled(false)
 		_ = settings.PutAreDevToolsEnabled(false)
 	}
+	_ = chromium.Show() // контроллер WebView2 невидим до явного Show — иначе белый экран
+	chromium.Resize()
 	procShowWindow.Call(hwnd, swShow)
 	centerWindow(hwnd)
 	chromium.Resize()
+	chromium.Focus()
 	chromium.Navigate(url)
+	chromium.Resize()
 
 	var m winMsg
 	for {
@@ -207,4 +218,9 @@ func userDataPath() string {
 		base = os.TempDir()
 	}
 	return base + "\\VoiceChanger"
+}
+
+// hideWindow прячет консольные окна PowerShell/cmd от пользователя.
+func hideWindow() *syscall.SysProcAttr {
+	return &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000} // CREATE_NO_WINDOW
 }

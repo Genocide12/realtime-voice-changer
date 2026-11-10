@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"syscall"
 )
 
 // На не-Windows системах (для локальной проверки) открываем системный браузер.
@@ -18,4 +19,9 @@ func runUI(url string) {
 func fatal(text string) {
 	fmt.Println(text)
 	os.Exit(1)
+}
+
+// hideWindow на не-Windows ничего не делает (нет консольных окон).
+func hideWindow() *syscall.SysProcAttr {
+	return &syscall.SysProcAttr{}
 }
