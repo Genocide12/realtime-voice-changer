@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Голос-подменщик — real-time voice conversion за один вечер</title>
-<meta name="description" content="Интерактивный гайд: подмена голоса в реальном времени (w-okada + RVC + VB-Cable) с калькулятором задержки и живым DAF-демо на Web Audio API.">
+<title>Голос-подменщик — реалтайм-эффекты и лаборатория звуков</title>
+<meta name="description" content="Реалтайм-трансформация голоса в браузере: робот, монстр, демон, гибрид + генератор новых звуков. Без сервера, без зависимостей.">
 <style>
 :root{
   --bg:#0b0e14; --panel:#121826; --panel2:#0f1420; --line:#1f2937;
@@ -13,424 +13,196 @@
   --mono:ui-monospace,"JetBrains Mono","Cascadia Code",Consolas,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;scroll-padding-top:76px}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.65}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.55}
 a{color:var(--cyan);text-decoration:none}
 a:hover{text-decoration:underline}
-code{font-family:var(--mono);font-size:.88em;background:#1a2234;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:#bae6fd;white-space:nowrap}
-.wrap{max-width:1060px;margin:0 auto;padding:0 20px}
+kbd{font-family:var(--mono);font-size:.78em;background:#1a2234;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 6px;color:#bae6fd}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
 
-/* ---------- header / nav ---------- */
-header{padding:64px 0 40px;background:
-  radial-gradient(900px 400px at 15% -10%,rgba(34,211,238,.13),transparent 60%),
-  radial-gradient(700px 380px at 90% 0%,rgba(167,139,250,.12),transparent 60%);}
-h1{font-size:clamp(28px,5vw,44px);line-height:1.15;font-weight:800;letter-spacing:-.5px}
+header{padding:34px 0 20px;background:
+  radial-gradient(800px 300px at 12% -10%,rgba(34,211,238,.12),transparent 60%),
+  radial-gradient(600px 280px at 92% 0%,rgba(167,139,250,.11),transparent 60%)}
+h1{font-size:clamp(24px,4vw,36px);font-weight:800;letter-spacing:-.4px}
 h1 .grad{background:linear-gradient(90deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
-.sub{color:var(--muted);font-size:clamp(15px,2.2vw,18px);max-width:760px;margin:16px 0 22px}
-.badges{display:flex;flex-wrap:wrap;gap:8px}
-.badge{font-family:var(--mono);font-size:12px;color:var(--muted);border:1px solid var(--line);background:rgba(18,24,38,.7);border-radius:999px;padding:4px 12px}
-.badge b{color:var(--cyan);font-weight:600}
+.sub{color:var(--muted);font-size:15px;max-width:860px;margin-top:8px}
 
-nav{position:sticky;top:0;z-index:50;background:rgba(11,14,20,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-nav .wrap{display:flex;gap:6px;overflow-x:auto;padding:10px 20px;scrollbar-width:none}
-nav .wrap::-webkit-scrollbar{display:none}
-nav a{color:var(--muted);font-size:13.5px;white-space:nowrap;border:1px solid transparent;border-radius:8px;padding:5px 12px}
-nav a:hover{color:var(--text);border-color:var(--line);background:var(--panel);text-decoration:none}
-nav a.active{color:var(--cyan);border-color:#164e63;background:rgba(34,211,238,.07)}
+nav{position:sticky;top:0;z-index:50;background:rgba(11,14,20,.93);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;gap:8px;padding:10px 20px}
+.tbtn{font:inherit;font-weight:600;font-size:14.5px;background:none;border:1px solid transparent;border-radius:9px;color:var(--muted);padding:7px 16px;cursor:pointer}
+.tbtn:hover{color:var(--text);border-color:var(--line)}
+.tbtn.active{color:var(--cyan);border-color:#155e75;background:rgba(34,211,238,.08)}
 
-/* ---------- sections ---------- */
-main{padding:8px 0 60px}
-section{padding:44px 0 8px}
-h2{font-size:clamp(21px,3vw,28px);letter-spacing:-.3px;margin-bottom:6px}
-h2 .n{font-family:var(--mono);color:var(--dim);font-size:.7em;margin-right:10px;vertical-align:middle}
-.lead{color:var(--muted);max-width:820px;margin-bottom:22px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:16px}
-.card h3{font-size:17px;margin-bottom:10px}
-p+p{margin-top:12px}
-.note{border-left:3px solid var(--cyan);background:rgba(34,211,238,.06);border-radius:0 10px 10px 0;padding:12px 16px;color:var(--muted);font-size:14.5px;margin:14px 0}
-.note.warn{border-color:var(--amber);background:rgba(245,158,11,.07)}
-.note.danger{border-color:var(--red);background:rgba(248,113,113,.07)}
-.note b{color:var(--text)}
-
-/* ---------- flow diagram ---------- */
-.flow{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;justify-content:center;margin:26px 0 10px}
-.node{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;text-align:center;min-width:150px;flex:1;font-size:14px}
-.node small{display:block;color:var(--dim);font-size:12px;margin-top:4px;line-height:1.45}
-.node.hot{border-color:#155e75;background:rgba(34,211,238,.07)}
-.node .emo{font-size:22px;display:block;margin-bottom:4px}
-.farr{align-self:center;color:var(--dim);font-size:20px}
-.flow-final{display:flex;flex-direction:column;gap:10px;flex:1;min-width:220px}
-@media (max-width:720px){.farr{transform:rotate(90deg)}}
-.caption{text-align:center;color:var(--dim);font-size:13px;margin-top:6px}
-
-/* ---------- tables ---------- */
-table{width:100%;border-collapse:collapse;font-size:14.5px;margin:10px 0 6px}
-th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
-th{color:var(--muted);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.4px}
-td b{color:var(--cyan)}
-.ok{color:var(--green)} .mid{color:var(--amber)} .bad{color:var(--red)}
-.tblwrap{overflow-x:auto}
-
-/* ---------- steps ---------- */
-.step{display:flex;gap:18px;margin-bottom:18px}
-.stepnum{flex:0 0 44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:18px;background:linear-gradient(135deg,rgba(34,211,238,.18),rgba(167,139,250,.18));border:1px solid var(--line);color:var(--cyan)}
-.stepbody{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 22px}
-.stepbody h3{font-size:16.5px;margin-bottom:8px}
-.stepbody ul{margin:8px 0 0 18px;color:var(--muted)}
-.stepbody li{margin:5px 0}
-.stepbody li b{color:var(--text)}
-
-/* ---------- calculator ---------- */
-.calc{display:grid;grid-template-columns:1.1fr 1fr;gap:18px}
-@media (max-width:820px){.calc{grid-template-columns:1fr}}
-.field{margin-bottom:16px}
-.field label{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin-bottom:7px}
-.field label output{font-family:var(--mono);color:var(--cyan)}
-select,input[type=range]{width:100%;accent-color:var(--cyan)}
-select{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:14.5px}
-select:focus{outline:1px solid var(--cyan)}
-input[type=range]{height:26px}
-.result{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:20px 22px;display:flex;flex-direction:column}
-.total{font-family:var(--mono);font-size:clamp(38px,6vw,54px);font-weight:700;line-height:1;letter-spacing:-1px}
-.total small{font-size:.4em;color:var(--dim);font-weight:400}
-.verdict{border-radius:9px;padding:8px 14px;margin:12px 0;font-size:14px;display:inline-block}
-.v-ok{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.3)}
-.v-mid{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
-.v-bad{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.3)}
-.syll{color:var(--muted);font-size:14px;margin-top:auto}
-.bar{display:flex;height:16px;border-radius:8px;overflow:hidden;margin:14px 0 6px;border:1px solid var(--line)}
-.bar div{height:100%}
-.b-chunk{background:var(--cyan)} .b-infer{background:var(--violet)} .b-driver{background:var(--amber)} .b-out{background:var(--green)}
-.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--muted);font-family:var(--mono)}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
-
-/* ---------- DAF demo ---------- */
-.daf{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-@media (max-width:820px){.daf{grid-template-columns:1fr}}
-.btn{font:inherit;font-weight:600;border-radius:10px;padding:11px 20px;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text);transition:filter .15s}
-.btn:hover{filter:brightness(1.15)}
+main{padding:18px 0 30px}
+.tab{display:none}
+.tab.active{display:block}
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.status{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.status.err{color:var(--red)}
+.btn{font:inherit;font-weight:600;border-radius:10px;padding:10px 18px;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text)}
+.btn:hover{filter:brightness(1.18)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
 .btn.primary{background:linear-gradient(90deg,#0891b2,#7c3aed);border-color:transparent}
-.btn.stop{background:rgba(248,113,113,.14);border-color:rgba(248,113,113,.4);color:var(--red)}
-.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
-#dafStatus{font-size:14px;color:var(--muted);min-height:44px;border:1px dashed var(--line);border-radius:10px;padding:10px 14px}
-#dafStatus.err{color:var(--red);border-color:rgba(248,113,113,.4)}
-canvas{width:100%;height:70px;display:block;background:var(--panel2);border:1px solid var(--line);border-radius:10px;margin-top:14px}
+.btn.stop{background:rgba(248,113,113,.14);border-color:rgba(248,113,113,.45);color:var(--red)}
+.btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(34,211,238,.08)}
 
-/* ---------- misc ---------- */
-.links{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:6px}
-.lcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px}
-.lcard b{display:block;margin-bottom:3px}
-.lcard span{color:var(--muted);font-size:13px}
-footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--dim);font-size:13.5px;text-align:center}
-footer .wrap{display:flex;flex-direction:column;gap:6px;align-items:center}
-.kbd{font-family:var(--mono);font-size:.85em;background:#1a2234;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 7px}
+.layout{display:grid;grid-template-columns:340px 1fr;gap:16px}
+@media (max-width:880px){.layout{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:16px}
+.card h3{font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px}
+.col{min-width:0}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:13.5px;font-weight:600;border-radius:999px;padding:7px 14px;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text)}
+.chip:hover{border-color:var(--cyan);color:var(--cyan)}
+.chip.active{border-color:var(--cyan);color:var(--cyan);background:rgba(34,211,238,.1)}
+.chip.alt{border-color:rgba(167,139,250,.4)}
+
+.mlabel{font-family:var(--mono);font-size:11px;color:var(--dim);margin:8px 0 3px;text-transform:uppercase;letter-spacing:.5px}
+canvas.meter{width:100%;height:52px;display:block;background:var(--panel2);border:1px solid var(--line);border-radius:9px}
+
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 18px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 18px}
+@media (max-width:880px){.grid3,.grid4{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:540px){.grid3,.grid4{grid-template-columns:1fr}}
+.fld label{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--muted);margin-bottom:5px;gap:6px}
+.fld label output{font-family:var(--mono);color:var(--cyan);font-size:12px;white-space:nowrap}
+.fld input[type=range]{width:100%;height:22px;accent-color:var(--cyan)}
+
+.pads{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+@media (max-width:880px){.pads{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:540px){.pads{grid-template-columns:repeat(2,1fr)}}
+.pad{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:86px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;cursor:pointer}
+.pad:hover{border-color:var(--violet)}
+.pad.flash{border-color:var(--cyan);background:rgba(34,211,238,.12);transform:scale(.97)}
+.pad .emo{font-size:22px}
+.pad b{font-size:13px;font-weight:600}
+.pad kbd{position:absolute;top:6px;right:6px;opacity:.65}
+
+footer{border-top:1px solid var(--line);padding:20px 0 34px;color:var(--dim);font-size:13px;text-align:center}
 </style>
 </head>
 <body>
 
 <header>
   <div class="wrap">
-    <h1>Голос-подменщик: <span class="grad">real-time voice conversion</span> за один вечер</h1>
-    <p class="sub">Твой голос подавляется на входе компьютера, и наружу — в Discord, Zoom, игру или стрим — идёт уже другой голос. Разбираем сборку «Вариант Б» на open source: w-okada + RVC + VB-Cable, с калькулятором задержки и живым демо эффекта отложенной слуховой обратной связи.</p>
-    <div class="badges">
-      <span class="badge">стек: <b>open source</b></span>
-      <span class="badge">задержка: <b>~90–300 мс</b></span>
-      <span class="badge">железо: <b>GPU ≥ 4 ГБ VRAM</b></span>
-      <span class="badge">демо: <b>Web Audio API</b></span>
-      <span class="badge">платформа: <b>Windows 10/11</b></span>
-    </div>
+    <h1>Голос-подменщик <span class="grad">real-time</span></h1>
+    <p class="sub">Твой голос подавляется, наружу идёт другой: 8 пресетов + полная ручная настройка цепочки эффектов. Рядом — лаборатория, которая синтезирует новые звуки с нуля. Всё считается в браузере, звук никуда не отправляется.</p>
   </div>
 </header>
 
 <nav>
   <div class="wrap">
-    <a href="#how">Как работает</a>
-    <a href="#parts">Что понадобится</a>
-    <a href="#steps">Сборка · 6 шагов</a>
-    <a href="#calc">Калькулятор задержки</a>
-    <a href="#daf">DAF-демо</a>
-    <a href="#trouble">Грабли</a>
-    <a href="#hybrid">Гибриды и Seed-VC</a>
-    <a href="#ethics">Этика и закон</a>
+    <button class="tbtn active" data-tab="voice">🎙 Голос</button>
+    <button class="tbtn" data-tab="lab">🎛 Лаборатория звуков</button>
   </div>
 </nav>
 
 <main>
 <div class="wrap">
 
-<!-- ================= HOW ================= -->
-<section id="how">
-  <h2><span class="n">01</span>Как течёт сигнал</h2>
-  <p class="lead">Ключ ко всей схеме — <b>виртуальный микрофон</b>. Приложения никогда не узнают о существовании твоего настоящего микрофона: они видят только «CABLE Output», в который уже пишет обработанный голос.</p>
-
-  <div class="card">
-    <div class="flow">
-      <div class="node"><span class="emo">🎤</span>Микрофон<small>физический, твой</small></div>
-      <div class="farr">→</div>
-      <div class="node hot"><span class="emo">⚙️</span>RTVC-движок<small>w-okada + RVC-модель<br>GPU, 90–300 мс</small></div>
-      <div class="farr">→</div>
-      <div class="flow-final">
-        <div class="node"><span class="emo">🎧</span>Наушники<small>мониторинг: только новый голос</small></div>
-        <div class="node"><span class="emo">🔀</span>CABLE Output<small>виртуальный микрофон в Discord / Zoom / игру</small></div>
-      </div>
-    </div>
-    <p class="caption">Оригинал наружу не выходит вообще — это архитектурная гарантия, а не настройка.</p>
+<!-- ================= ГОЛОС ================= -->
+<section id="tab-voice" class="tab active">
+  <div class="toolbar">
+    <button class="btn primary" id="voiceStart">🎤 Включить микрофон</button>
+    <button class="btn stop" id="voiceStop" disabled>■ Стоп</button>
+    <button class="btn" id="bypassBtn">Оригинал A/B</button>
+    <button class="btn" id="voiceRec">● Запись</button>
+    <span class="status" id="voiceStatus">микрофон выключен</span>
   </div>
 
-  <div class="note"><b>Внутри движка.</b> Энкодер (HuBERT / ContentVec) отделяет «что сказано» от «кем сказано»: фонетический контент очищается от тембра. К контенту пришивается эмбеддинг целевого голоса, правится высота тона (F0) и форманты, и быстрый вокодер собирает звук обратно. Слог живёт 150–300 мс — конвертер успевает за ним с отставанием примерно в один слог.</div>
-
-  <div class="note warn"><b>Два честных нюанса.</b> 1) Костная проводимость: полностью заглушить собственный голос в собственных ушах невозможно физически — ты всегда чуть-чуть слышишь себя «изнутри черепа». Максимум достижимого: в наушниках только новый голос, свой остаётся глухим фоном. 2) Мониторинг приходит с задержкой — это эффект DAF, к нему мозг адаптируется (см. демо ниже).</div>
-</section>
-
-<!-- ================= PARTS ================= -->
-<section id="parts">
-  <h2><span class="n">02</span>Что понадобится</h2>
-  <p class="lead">Всё бесплатно. Единственная серьёзная инвестиция — наличие NVIDIA-видеокарты: на CPU задержка взлетает до 10–20 секунд, и живая речь становится невозможной.</p>
-
-  <div class="card">
-    <h3>Железо</h3>
-    <div class="tblwrap"><table>
-      <tr><th>Компонент</th><th>Минимум</th><th>Комфорт</th></tr>
-      <tr><td><b>GPU</b></td><td class="mid">GTX 1060 6 ГБ</td><td class="ok">RTX 3050 6 ГБ и выше — с запасом</td></tr>
-      <tr><td><b>VRAM</b></td><td class="mid">4 ГБ</td><td class="ok">6–8 ГБ (RVC + мониторинг + игра одновременно)</td></tr>
-      <tr><td><b>ОС</b></td><td>Windows 10</td><td class="ok">Windows 11</td></tr>
-      <tr><td><b>Наушники</b></td><td class="mid">любые вкладыши</td><td class="ok">закрытые накладные (DT 770, ATH-M50x) — меньше подтекания звука</td></tr>
-      <tr><td><b>Микрофон</b></td><td colspan="2">любой, включая гарнитурный — модель прощает</td></tr>
-    </table></div>
-  </div>
-
-  <div class="card">
-    <h3>Софт</h3>
-    <div class="links">
-      <div class="lcard"><b>w-okada voice-changer</b><span>сам движок реального времени, открытый код</span></div>
-      <div class="lcard"><b>RVC-модель голоса</b><span>готовая модель сообщества или своя, обученная на 10–30 мин записи</span></div>
-      <div class="lcard"><b>Seed-VC</b><span>zero-shot: голос из сэмпла 1–30 с без обучения</span></div>
-      <div class="lcard"><b>VB-Cable</b><span>виртуальный аудиокабель — «фейковый микрофон»</span></div>
-      <div class="lcard"><b>VoiceMeeter Banana</b><span>альтернатива CABLE с микшером и роутингом</span></div>
-      <div class="lcard"><b>ASIO-драйвер</b><span>панель твоей аудиокарты или ASIO4ALL — минус 100–200 мс</span></div>
-    </div>
-    <p style="margin-top:14px;color:var(--muted);font-size:14px">Прямые ссылки на релизы и репозитории — в <code>README.md</code> этого проекта и в шагах ниже.</p>
-  </div>
-</section>
-
-<!-- ================= STEPS ================= -->
-<section id="steps">
-  <h2><span class="n">03</span>Сборка: шесть шагов, один вечер</h2>
-  <p class="lead">Порядок важен: сначала кабель, потом движок, потом голос, и только в конце — Discord.</p>
-
-  <div class="step"><div class="stepnum">1</div><div class="stepbody">
-    <h3>Виртуальный микрофон: VB-Cable</h3>
-    <ul>
-      <li>Скачай установщик с официального сайта <b>vb-audio.com</b> (раздел Cable) — бесплатно, регистрация не нужна.</li>
-      <li>Установи от администратора и <b>перезагрузись</b> — без этого девайс не поднимется.</li>
-      <li>Проверка: в настройках звука Windows появились «CABLE Input» (выход) и «CABLE Output» (микрофон).</li>
-    </ul>
-  </div></div>
-
-  <div class="step"><div class="stepnum">2</div><div class="stepbody">
-    <h3>Движок: w-okada voice-changer</h3>
-    <ul>
-      <li>На странице релизов репозитория <code>w-okada/voice-changer</code> возьми сборку <b>для NVIDIA CUDA</b> (в имени файла — <code>cuda</code> / <code>nvidia</code>).</li>
-      <li>Распакуй в путь <b>без кириллицы и пробелов</b> (например <code>D:\vc\</code>), запусти <code>start_http.bat</code>.</li>
-      <li>Откроется панель по адресу <code>http://localhost:18888</code> — это пульт управления.</li>
-    </ul>
-  </div></div>
-
-  <div class="step"><div class="stepnum">3</div><div class="stepbody">
-    <h3>Голос: модель</h3>
-    <ul>
-      <li><b>Вариант «быстро»:</b> готовая RVC-модель сообщества — файлы <code>.pth</code> + <code>.index</code>. Ищи по запросу «RVC voice models» на тематических площадках сообщества.</li>
-      <li><b>Вариант «свой»:</b> обучение в RVC WebUI на 10–30 минутах чистой записи одного голоса — лучшее качество и никаких вопросов о правах.</li>
-      <li><b>Вариант «без обучения»:</b> <b>Seed-VC</b> в real-time режиме — клонируй голос из сэмпла 1–30 с. Задержка выше (~300 мс алгоритмической + ~100 мс девайсной), зато ноль подготовки.</li>
-      <li>Загрузи модель в w-okada: секция <b>MODEL</b> → выбор/перетаскивание <code>.pth</code>.</li>
-    </ul>
-  </div></div>
-
-  <div class="step"><div class="stepnum">4</div><div class="stepbody">
-    <h3>Маршрутизация: свой голос — внутрь, чужой — наружу</h3>
-    <ul>
-      <li><b>Input</b> = твой физический микрофон.</li>
-      <li><b>Output (мониторинг)</b> = твои наушники — слышишь только новый голос.</li>
-      <li><b>Дополнительный вывод</b> = <b>CABLE Input</b> — обработанный голос уходит в виртуальный микрофон.</li>
-      <li><b>Чанк</b> 256–512 сэмплов, <b>extra/crossfade</b> 2–2.5, <b>f0 detector</b> RMVPE.</li>
-      <li>Если у аудиокарты есть ASIO-панель — включи ASIO. <span class="bad">MME</span> съедает +150–200 мс просто так.</li>
-    </ul>
-  </div></div>
-
-  <div class="step"><div class="stepnum">5</div><div class="stepbody">
-    <h3>Discord / Zoom / игра</h3>
-    <ul>
-      <li>Устройством ввода выбери <b>CABLE Output</b> — не физический микрофон.</li>
-      <li><b>Выключи</b> эхоподавление, шумоподавление (Krisp) и авточувствительность: они калечат синтетический голос, он звучит «роботом».</li>
-      <li>В Zoom: Настройки → Аудио → «Подавление фонового шума» → <b>Выкл</b> (или «Ручное»).</li>
-    </ul>
-  </div></div>
-
-  <div class="step"><div class="stepnum">6</div><div class="stepbody">
-    <h3>Тест и тюнинг</h3>
-    <ul>
-      <li>В Discord: «Проверка микрофона» — должен звучать только новый голос.</li>
-      <li>Цель по задержке мониторинга: <b>&lt; 150 мс</b> — считай её в калькуляторе ниже.</li>
-      <li>Потренируй мозг на DAF-демо ниже: первые минуты речь спотыкается — это нормально и проходит.</li>
-    </ul>
-  </div></div>
-</section>
-
-<!-- ================= CALC ================= -->
-<section id="calc">
-  <h2><span class="n">04</span>Калькулятор задержки</h2>
-  <p class="lead">Упрощённая, но честная модель цепочки «микрофон → движок → наушники». Подставь свои настройки из w-okada и посмотри, с чем будет жить твой мозг.</p>
-
-  <div class="card">
-    <div class="calc">
-      <div>
-        <div class="field">
-          <label>Частота дискретизации</label>
-          <select id="sr">
-            <option value="48000" selected>48 000 Гц (рекомендуется)</option>
-            <option value="44100">44 100 Гц</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Размер чанка (сэмплов)</label>
-          <select id="chunk">
-            <option value="128">128 — минимум задержки, нужна мощная GPU</option>
-            <option value="256">256 — спортивный режим</option>
-            <option value="512" selected>512 — баланс (по умолчанию)</option>
-            <option value="1024">1024 — запас для слабой GPU</option>
-            <option value="2048">2048 — только если трещит на 1024</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Буфер чанков (extra / crossfade)</label>
-          <select id="cf">
-            <option value="1">1 — жёстко, возможны щелчки</option>
-            <option value="2" selected>2 — стандарт</option>
-            <option value="3">3 — плавно</option>
-            <option value="4">4 — очень плавно, +задержка</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Аудиодрайвер</label>
-          <select id="driver">
-            <option value="150">MME — «из коробки», тяжёлый</option>
-            <option value="30" selected>WASAPI — норма без ASIO</option>
-            <option value="5">ASIO — минимум (+отдельная панель)</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Инференс на GPU <output id="inferOut">40 мс</output></label>
-          <input type="range" id="infer" min="10" max="150" value="40" step="5">
-        </div>
-        <div class="field">
-          <label>Выходной буфер мониторинга <output id="outOut">10 мс</output></label>
-          <input type="range" id="out" min="5" max="60" value="10" step="1">
+  <div class="layout">
+    <div class="col">
+      <div class="card">
+        <h3>Пресеты</h3>
+        <div class="chips" id="presetChips">
+          <button class="chip" data-preset="clean">Чистый</button>
+          <button class="chip" data-preset="robot">🤖 Робот</button>
+          <button class="chip" data-preset="monster">👹 Монстр</button>
+          <button class="chip" data-preset="demon">😈 Демон</button>
+          <button class="chip" data-preset="squirrel">🐿 Белка</button>
+          <button class="chip" data-preset="radio">📻 Радио</button>
+          <button class="chip" data-preset="cosmic">🛰 Космонавт</button>
+          <button class="chip" data-preset="hybrid">🧬 Гибрид</button>
+          <button class="chip alt" data-preset="random">🎲 Рандом</button>
         </div>
       </div>
+      <div class="card">
+        <h3>Мониторы</h3>
+        <div class="mlabel">вход (микрофон)</div>
+        <canvas class="meter" id="meterIn" width="480" height="52"></canvas>
+        <div class="mlabel">выход (обработанный)</div>
+        <canvas class="meter" id="meterOut" width="480" height="52"></canvas>
+      </div>
+    </div>
 
-      <div class="result">
-        <div style="color:var(--muted);font-size:14px;margin-bottom:8px">Задержка мониторинга</div>
-        <div class="total"><span id="totalMs">—</span><small> мс</small></div>
-        <div><span class="verdict v-ok" id="verdict">—</span></div>
-        <div class="bar" id="bar">
-          <div class="b-chunk" id="sChunk"></div>
-          <div class="b-infer" id="sInfer"></div>
-          <div class="b-driver" id="sDriver"></div>
-          <div class="b-out" id="sOut"></div>
+    <div class="col">
+      <div class="card">
+        <h3>Цепочка эффектов</h3>
+        <div class="grid3">
+          <div class="fld"><label>Полутоны <output id="semiOut">0</output></label>
+            <input type="range" id="semi" min="-24" max="24" step="1" value="0"></div>
+          <div class="fld"><label>Ринг-модуляция <output id="ringMixOut">0%</output></label>
+            <input type="range" id="ringMix" min="0" max="1" step="0.01" value="0"></div>
+          <div class="fld"><label>Частота ринга <output id="ringFreqOut">60 Гц</output></label>
+            <input type="range" id="ringFreq" min="5" max="400" step="1" value="60"></div>
+          <div class="fld"><label>Перегруз <output id="driveOut">0%</output></label>
+            <input type="range" id="drive" min="0" max="1" step="0.01" value="0"></div>
+          <div class="fld"><label>НЧ-срез <output id="hpOut">30 Гц</output></label>
+            <input type="range" id="hp" min="20" max="500" step="5" value="30"></div>
+          <div class="fld"><label>ВЧ-срез <output id="lpOut">16 кГц</output></label>
+            <input type="range" id="lp" min="600" max="16000" step="100" value="16000"></div>
+          <div class="fld"><label>Реверб <output id="revOut">8%</output></label>
+            <input type="range" id="rev" min="0" max="1" step="0.01" value="0.08"></div>
+          <div class="fld"><label>Размер зала <output id="revSizeOut">0.7 с</output></label>
+            <input type="range" id="revSize" min="0.3" max="3" step="0.1" value="0.7"></div>
+          <div class="fld"><label>Эхо: время <output id="echoTimeOut">0 мс</output></label>
+            <input type="range" id="echoTime" min="0" max="800" step="10" value="0"></div>
+          <div class="fld"><label>Эхо: затухание <output id="echoFbOut">0%</output></label>
+            <input type="range" id="echoFb" min="0" max="85" step="1" value="0"></div>
+          <div class="fld"><label>Эхо: уровень <output id="echoMixOut">0%</output></label>
+            <input type="range" id="echoMix" min="0" max="1" step="0.01" value="0"></div>
+          <div class="fld"><label>Громкость выхода <output id="volOut">100%</output></label>
+            <input type="range" id="vol" min="0" max="1.5" step="0.05" value="1"></div>
         </div>
-        <div class="legend">
-          <span><i class="b-chunk"></i>чанк <b id="vChunk">—</b></span>
-          <span><i class="b-infer"></i>GPU <b id="vInfer">—</b></span>
-          <span><i class="b-driver"></i>драйвер <b id="vDriver">—</b></span>
-          <span><i class="b-out"></i>вых. буфер <b id="vOut">—</b></span>
-        </div>
-        <div class="syll" id="syll" style="margin-top:14px">—</div>
-        <div class="syll" style="font-size:13px;color:var(--dim)">Собеседник услышит то же + 20–60 мс сети — для него это незаметно: у него нет твоего эталона голоса.</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ================= DAF ================= -->
-<section id="daf">
-  <h2><span class="n">05</span>DAF-демо: услышь свою задержку до сборки</h2>
-  <p class="lead">Твой микрофон возвращается в наушники с регулируемой задержкой — ровно тот эффект, который даёт мониторинг сконвертированного голоса. Проверь, с какой задержкой твоя речь начинает спотыкаться, и пойми, к чему готовиться.</p>
-
-  <div class="note danger"><b>⚠ Только в наушниках!</b> Если включить это на колонках, получишь петлю обратной связи — вой на всё здание. И включай, когда вокруг тихо: демо пропускает весь звук с микрофона.</div>
+<!-- ================= ЛАБОРАТОРИЯ ================= -->
+<section id="tab-lab" class="tab">
+  <div class="toolbar">
+    <button class="btn" id="labRec">● Запись</button>
+    <span class="status">Клавиши <kbd>1</kbd>…<kbd>9</kbd>, <kbd>0</kbd>, <kbd>Q</kbd>, <kbd>W</kbd> запускают пэды — каждый звук синтезируется заново и чуть отличается</span>
+  </div>
 
   <div class="card">
-    <div class="daf">
-      <div>
-        <div class="field">
-          <label>Задержка возврата <output id="dafDelayOut">200 мс</output></label>
-          <input type="range" id="dafDelay" min="0" max="600" value="200" step="10">
-        </div>
-        <div class="btnrow">
-          <button class="btn primary" id="dafStartBtn">🎤 Включить микрофон</button>
-          <button class="btn stop" id="dafStopBtn" disabled>■ Стоп</button>
-        </div>
-        <div id="dafStatus">Микрофон выключен. Надень наушники, включи — и читай вслух фразу «раз-два-три-четыре-пять», меняя задержку ползунком.</div>
-        <p style="color:var(--dim);font-size:13px;margin-top:12px">Микрофон используется только локально в твоём браузере: никуда не отправляется и не записывается. Работает по HTTPS (эта страница) или на <code>localhost</code>.</p>
-      </div>
-      <div>
-        <canvas id="meter" width="600" height="70"></canvas>
-        <p style="color:var(--muted);font-size:14px;margin-top:12px"><b style="color:var(--text)">Шкала калибровки по ощущениям:</b></p>
-        <div class="tblwrap"><table>
-          <tr><th>Задержка</th><th>Что чувствуешь</th></tr>
-          <tr><td><span class="ok">0–50 мс</span></td><td>почти обычный сайд-тон, говорить легко</td></tr>
-          <tr><td><span class="mid">100–200 мс</span></td><td>лёгкий «хвост»; адаптация за минуты — режим стримеров</td></tr>
-          <tr><td><span class="bad">250–400 мс</span></td><td>речь спотыкается, слоги растягиваются; привыкание за дни</td></tr>
-          <tr><td><span class="bad">&gt; 400 мс</span></td><td>говорить всерьёз почти невозможно</td></tr>
-        </table></div>
-      </div>
+    <h3>Характер звуков</h3>
+    <div class="grid4">
+      <div class="fld"><label>Высота <output id="labPitchOut">×1.00</output></label>
+        <input type="range" id="labPitch" min="0.5" max="2" step="0.05" value="1"></div>
+      <div class="fld"><label>Яркость <output id="labBrightOut">×1.00</output></label>
+        <input type="range" id="labBright" min="0.3" max="3" step="0.05" value="1"></div>
+      <div class="fld"><label>Длительность <output id="labTimeOut">×1.00</output></label>
+        <input type="range" id="labTime" min="0.5" max="2" step="0.05" value="1"></div>
+      <div class="fld"><label>Реверб <output id="labRevOut">15%</output></label>
+        <input type="range" id="labRev" min="0" max="0.8" step="0.01" value="0.15"></div>
     </div>
   </div>
 
-  <div class="note"><b>Почему так.</b> Эффект отложенной слуховой обратной связи (delayed auditory feedback) — психолингвистическое явление: когда мозг слышит собственную речь с запаздыванием, план говорения конфликтует с приходящим звуком. Обычной речью с 100–300 мс люди адаптируются за минуты; для пения и ритма планка жёстче — музыканты страдают уже на 20–30 мс, поэтому в студиях мониторинг почти мгновенный.</div>
-</section>
-
-<!-- ================= TROUBLE ================= -->
-<section id="trouble">
-  <h2><span class="n">06</span>Грабли и решения</h2>
-  <p class="lead">Пять проблем, на которые жалуются почти все, кто собирает такой стенд впервые.</p>
-  <div class="card">
-    <div class="tblwrap"><table>
-      <tr><th>Симптом</th><th>Причина и лечение</th></tr>
-      <tr><td><b>Задержка 10–20 секунд</b></td><td>Движок работает на CPU. Возьми сборку под CUDA и проверь, что драйвер NVIDIA свежий. На CPU живая речь невозможна в принципе.</td></tr>
-      <tr><td><b>Треск и обрывы</b></td><td>Чанк слишком мал для твоей GPU. Поднимай его шагами 512 → 1024 → 2048 или увеличь extra, пока не станет чисто.</td></tr>
-      <tr><td><b>Свист или вой</b></td><td>Петля: колонки + микрофон. Только наушники, без вариантов.</td></tr>
-      <tr><td><b>«Робот» у собеседника</b></td><td>Шумодав приложения калечит синтетический звук. В Discord выключи Krisp и эхоподавление, в Zoom — подавление шума.</td></tr>
-      <tr><td><b>Свой голос слышен вдобавок к новому</b></td><td>В приложении выбран физический микрофон вместо CABLE Output, либо открытый корпус наушников подтекает. Проверь маршрут и смени на закрытые.</td></tr>
-      <tr><td><b>Модель не загружается</b></td><td><code>.pth</code> и <code>.index</code> должны быть от одной версии RVC. Скачал пару от разных — найди согласованную.</td></tr>
-    </table></div>
-  </div>
-</section>
-
-<!-- ================= HYBRID ================= -->
-<section id="hybrid">
-  <h2><span class="n">07</span>Гибриды голосов и Seed-VC</h2>
-  <p class="lead">«40 % одного голоса + 60 % другого» — технически это смешивание эмбеддингов, и из коробки это не даёт никто. Что можно сделать сегодня.</p>
-  <div class="card">
-    <h3>Рабочие приёмы</h3>
-    <ul style="margin:8px 0 0 18px;color:var(--muted)">
-      <li style="margin:6px 0"><b style="color:var(--text)">Транспонирование (transpose)</b> — сдвиг высоты тона в полутонах в w-okada: мужской ↔ женский регистр работает уже из коробки. Начни с ±12.</li>
-      <li style="margin:6px 0"><b style="color:var(--text)">Смешивание эмбеддингов</b> — усредни векторы целевых голосов с весами в собственном скрипте пайплайна (RVC даёт к этому доступ). Стабильнее всего выходит на голосах близкого регистра.</li>
-      <li style="margin:6px 0"><b style="color:var(--text)">Seed-VC zero-shot</b> — сэмпл голоса 1–30 с без обучения: самый быстрый способ «примерить» голос и понять, твой ли это тембр, прежде чем обучать полноценную RVC-модель.</li>
-      <li style="margin:6px 0"><b style="color:var(--text)">Формантный сдвиг</b> — меняет «размер горла», оставляя высоту тона: ещё одна ручка для гибридов.</li>
-    </ul>
-  </div>
-</section>
-
-<!-- ================= ETHICS ================= -->
-<section id="ethics">
-  <h2><span class="n">08</span>Этика и закон</h2>
-  <div class="card">
-    <ul style="margin:2px 0 0 18px;color:var(--muted)">
-      <li style="margin:7px 0"><b style="color:var(--text)">Клонируй только свой голос</b> или голос с явного письменного разрешения владельца. Голос — персональная характеристика, в большинстве юрисдикций его подмена для обмана уже повод для суда.</li>
-      <li style="margin:7px 0"><b style="color:var(--text)">Не обманывай собеседника</b>, если от «кто говорит» зависит решение — деньги, доступ, доверие. Это уже не звуковой эксперимент, а мошенничество.</li>
-      <li style="margin:7px 0"><b style="color:var(--text)">Помечай синтетику</b> при публикации записей: слушатель имеет право знать, что голос сгенерирован.</li>
-      <li style="margin:7px 0"><b style="color:var(--text)">Игры и стримы</b> — нормальный сценарий: меняй голос на персонажа, это часть жанра. Скрываться имеет смысл только от токсиков, а не от модераторов.</li>
-    </ul>
+  <div class="pads" id="pads">
+    <button class="pad" data-sound="laser"><kbd>1</kbd><span class="emo">⚡</span><b>Лазер</b></button>
+    <button class="pad" data-sound="boom"><kbd>2</kbd><span class="emo">💥</span><b>Взрыв</b></button>
+    <button class="pad" data-sound="kick"><kbd>3</kbd><span class="emo">🥁</span><b>Кик</b></button>
+    <button class="pad" data-sound="siren"><kbd>4</kbd><span class="emo">🚨</span><b>Сирена</b></button>
+    <button class="pad" data-sound="blips"><kbd>5</kbd><span class="emo">💻</span><b>Бипы</b></button>
+    <button class="pad" data-sound="metal"><kbd>6</kbd><span class="emo">🔧</span><b>Металл</b></button>
+    <button class="pad" data-sound="dial"><kbd>7</kbd><span class="emo">☎️</span><b>Гудок</b></button>
+    <button class="pad" data-sound="whoosh"><kbd>8</kbd><span class="emo">🌪️</span><b>Вжух</b></button>
+    <button class="pad" data-sound="fall"><kbd>9</kbd><span class="emo">📉</span><b>Падение</b></button>
+    <button class="pad" data-sound="drone"><kbd>0</kbd><span class="emo">🌀</span><b>Гул</b></button>
+    <button class="pad" data-sound="plasma"><kbd>Q</kbd><span class="emo">🔮</span><b>Плазма</b></button>
+    <button class="pad" data-sound="morse"><kbd>W</kbd><span class="emo">📡</span><b>Морзе</b></button>
   </div>
 </section>
 
@@ -439,155 +211,558 @@ footer .wrap{display:flex;flex-direction:column;gap:6px;align-items:center}
 
 <footer>
   <div class="wrap">
-    <div>Единый самодостаточный HTML — без сборки, фреймворков и внешних скриптов.</div>
-    <div>Исходники: <a href="https://github.com/Genocide12/realtime-voice-changer" id="repoLink">Genocide12/realtime-voice-changer</a></div>
+    Голос доступен только внутри браузера · используй свой голос или голос с разрешения владельца · <a href="https://github.com/Genocide12/realtime-voice-changer">исходники</a>
   </div>
 </footer>
 
+<script type="audio/worklet" id="vcWorklet">
+class VCCore extends AudioWorkletProcessor {
+  static get parameterDescriptors(){
+    return [
+      {name:'ratio',    defaultValue:1, minValue:0.25, maxValue:4,   automationRate:'k-rate'},
+      {name:'ringFreq', defaultValue:0, minValue:0,    maxValue:2000,automationRate:'k-rate'},
+      {name:'ringMix',  defaultValue:0, minValue:0,    maxValue:1,   automationRate:'k-rate'},
+      {name:'drive',    defaultValue:0, minValue:0,    maxValue:1,   automationRate:'k-rate'}
+    ];
+  }
+  constructor(){
+    super();
+    this.N = 8192;
+    this.buf = new Float32Array(this.N);
+    this.w = 0;
+    this.grain = 1024;
+    this.d = 0;
+    this.ringPhase = 0;
+  }
+  process(inputs, outputs, params){
+    const out = outputs[0]; if(!out || !out[0]) return true;
+    const y = out[0];
+    const inp = inputs[0];
+    const x0 = (inp && inp[0]) ? inp[0] : null;
+    const n = y.length;
+    const ratio = params.ratio[0];
+    const rf = params.ringFreq[0];
+    const rm = params.ringMix[0];
+    const dr = params.drive[0];
+    const g = this.grain, N = this.N, buf = this.buf;
+    for(let i=0;i<n;i++){
+      buf[this.w] = x0 ? x0[i] : 0;
+      // гранулярный питч-шифтер: две головки, перекрёстное sin^2-окно
+      this.d += (1 - ratio);
+      if(this.d >= g) this.d -= g; else if(this.d < 0) this.d += g;
+      let acc = 0;
+      for(let h=0;h<2;h++){
+        const dh = h===0 ? this.d : (this.d + g*0.5 >= g ? this.d - g*0.5 : this.d + g*0.5);
+        const p = ((this.w - dh) % N + N) % N;
+        const i0 = p|0, fr = p - i0;
+        const s = buf[i0]*(1-fr) + buf[(i0+1)%N]*fr;
+        const wv = Math.sin(Math.PI * dh / g);
+        acc += s * wv * wv;
+      }
+      let v = acc;
+      // ринг-модуляция: v * (1-mix + mix*sin(2πft))
+      if(rm > 0.001 && rf > 0){
+        this.ringPhase += 2*Math.PI*rf/sampleRate;
+        if(this.ringPhase > 2*Math.PI) this.ringPhase -= 2*Math.PI;
+        v = v * ((1-rm) + rm*Math.sin(this.ringPhase));
+      }
+      // мягкий перегруз tanh
+      if(dr > 0.002){
+        const k = 1 + dr*7;
+        v = Math.tanh(k*v)/Math.tanh(k);
+      }
+      y[i] = v;
+      this.w = (this.w + 1) % N;
+    }
+    return true;
+  }
+}
+registerProcessor('vc-core', VCCore);
+</script>
+
 <script>
 "use strict";
-var $ = function(s){ return document.querySelector(s); };
+var $ = function(s){ return document.getElementById(s); };
 
-/* ============ активный пункт навигации ============ */
-(function(){
-  var links = document.querySelectorAll("nav a");
-  var map = {};
-  links.forEach(function(a){ map[a.getAttribute("href").slice(1)] = a; });
-  var obs = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){
-      if(e.isIntersecting){
-        links.forEach(function(a){ a.classList.remove("active"); });
-        var a = map[e.target.id]; if(a) a.classList.add("active");
-      }
-    });
-  }, {rootMargin:"-30% 0px -60% 0px"});
-  document.querySelectorAll("main section").forEach(function(s){ obs.observe(s); });
-})();
-
-/* ============ калькулятор задержки ============ */
-function recalc(){
-  var sr      = +$("#sr").value;
-  var chunk   = +$("#chunk").value;
-  var cf      = +$("#cf").value;
-  var driver  = +$("#driver").value;
-  var infer   = +$("#infer").value;
-  var out     = +$("#out").value;
-
-  $("#inferOut").textContent = infer + " мс";
-  $("#outOut").textContent   = out + " мс";
-
-  var chunkMs = chunk * cf / sr * 1000;
-  var total = chunkMs + infer + driver + out;
-
-  $("#totalMs").textContent = Math.round(total);
-
-  var v = $("#verdict");
-  var cls, txt;
-  if(total < 100){      cls = "verdict v-ok";  txt = "Комфортно — как обычная связь"; }
-  else if(total < 200){ cls = "verdict v-ok";  txt = "Стрим-стандарт: привыкание за минуты"; }
-  else if(total < 350){ cls = "verdict v-mid"; txt = "Заметно; привыкание за дни — уменьши чанк / поставь ASIO"; }
-  else{                 cls = "verdict v-bad"; txt = "Речь будет разваливаться: меньше чанк, ASIO, мощнее GPU"; }
-  v.className = cls; v.textContent = txt;
-
-  var parts = [
-    ["sChunk","vChunk", chunkMs ],
-    ["sInfer","vInfer", infer   ],
-    ["sDriver","vDriver", driver ],
-    ["sOut","vOut",     out     ]
-  ];
-  parts.forEach(function(p){
-    var w = Math.max(2, total ? (p[2]/total*100) : 0);
-    document.getElementById(p[0]).style.width = w + "%";
-    document.getElementById(p[1]).textContent = Math.round(p[2]) + " мс";
+/* ============ вкладки ============ */
+document.querySelectorAll(".tbtn").forEach(function(b){
+  b.addEventListener("click", function(){
+    document.querySelectorAll(".tbtn").forEach(function(x){ x.classList.remove("active"); });
+    document.querySelectorAll(".tab").forEach(function(x){ x.classList.remove("active"); });
+    b.classList.add("active");
+    $("tab-" + b.dataset.tab).classList.add("active");
   });
+});
 
-  var syl = total / 200; /* средний слог ~200 мс */
-  $("#syll").innerHTML = total
-    ? "Отставание от собственной речи: <b>" + (syl < 1 ? "меньше слога" : "~" + (Math.round(syl*10)/10) + " слога") + "</b> (средний слог ≈ 200 мс)."
-    : "—";
+/* ============ состояние голосовой цепочки ============ */
+var st = { semi:0, ringMix:0, ringFreq:60, drive:0, hp:30, lp:16000,
+           rev:0.08, revSize:0.7, echoTime:0, echoFb:0, echoMix:0, vol:1 };
+
+var PRESETS = {
+  clean:   { semi:0,   ringMix:0,    ringFreq:60,  drive:0,    hp:30,  lp:16000, rev:0.08, revSize:0.7, echoTime:0,   echoFb:0,  echoMix:0,    vol:1   },
+  robot:   { semi:0,   ringMix:0.55, ringFreq:50,  drive:0.2,  hp:90,  lp:7000,  rev:0.12, revSize:0.6, echoTime:0,   echoFb:0,  echoMix:0,    vol:1   },
+  monster: { semi:-7,  ringMix:0.15, ringFreq:30,  drive:0.45, hp:40,  lp:8500,  rev:0.3,  revSize:1.6, echoTime:90,  echoFb:25, echoMix:0.15, vol:1   },
+  demon:   { semi:-12, ringMix:0.25, ringFreq:20,  drive:0.65, hp:30,  lp:5200,  rev:0.42, revSize:2.4, echoTime:260, echoFb:45, echoMix:0.3,  vol:1   },
+  squirrel:{ semi:8,   ringMix:0,    ringFreq:60,  drive:0.1,  hp:80,  lp:13000, rev:0.08, revSize:0.5, echoTime:0,   echoFb:0,  echoMix:0,    vol:1   },
+  radio:   { semi:0,   ringMix:0,    ringFreq:60,  drive:0.8,  hp:480, lp:3200,  rev:0.05, revSize:0.4, echoTime:130, echoFb:30, echoMix:0.25, vol:1   },
+  cosmic:  { semi:-2,  ringMix:0.1,  ringFreq:90,  drive:0.2,  hp:60,  lp:7500,  rev:0.75, revSize:2.8, echoTime:420, echoFb:50, echoMix:0.4,  vol:1   },
+  hybrid:  { semi:3,   ringMix:0.22, ringFreq:84,  drive:0.3,  hp:70,  lp:9500,  rev:0.18, revSize:1.1, echoTime:70,  echoFb:35, echoMix:0.12, vol:1   }
+};
+
+function rnd(a,b){ return a + Math.random()*(b-a); }
+function O(id, txt){ $(id).textContent = txt; }
+
+function updOuts(){
+  O("semiOut",     (st.semi>0?"+":"") + st.semi);
+  O("ringMixOut",  Math.round(st.ringMix*100) + "%");
+  O("ringFreqOut", Math.round(st.ringFreq) + " Гц");
+  O("driveOut",    Math.round(st.drive*100) + "%");
+  O("hpOut",       Math.round(st.hp) + " Гц");
+  O("lpOut",       st.lp>=1000 ? (st.lp/1000).toFixed(1)+" кГц" : Math.round(st.lp)+" Гц");
+  O("revOut",      Math.round(st.rev*100) + "%");
+  O("revSizeOut",  st.revSize.toFixed(1) + " с");
+  O("echoTimeOut", Math.round(st.echoTime) + " мс");
+  O("echoFbOut",   Math.round(st.echoFb) + "%");
+  O("echoMixOut",  Math.round(st.echoMix*100) + "%");
+  O("volOut",      Math.round(st.vol*100) + "%");
 }
-["sr","chunk","cf","driver"].forEach(function(id){ $("#"+id).addEventListener("change", recalc); });
-["infer","out"].forEach(function(id){ $("#"+id).addEventListener("input", recalc); });
-recalc();
 
-/* ============ DAF-демо ============ */
-var dafCtx=null, dafStream=null, dafSrc=null, dafDelay=null, dafGain=null, dafAn=null;
-var dafOn=false, dafRaf=0;
+/* ============ голосовой граф ============ */
+var AC = window.AudioContext || window.webkitAudioContext;
+var voiceOn = false, voiceCtx = null, micStream = null, micSrc = null;
+var worklet=null, hp=null, lp=null, convolver=null, revWet=null, revDry=null;
+var echoDelay=null, echoFilt=null, echoFb=null, echoWet=null;
+var master=null, bypassGain=null, comp=null, inAn=null, outAn=null;
+var metersRaf = 0, bypassOn = false, revSizeTimer = 0;
 
-function dafStatus(msg, isErr){
-  var el = $("#dafStatus");
-  el.textContent = msg;
-  el.className = isErr ? "err" : "";
-}
-function setButtons(on){
-  $("#dafStartBtn").disabled = on;
-  $("#dafStopBtn").disabled = !on;
-}
-
-function drawMeter(){
-  if(!dafOn) return;
-  var c = $("#meter"), g = c.getContext("2d");
-  var data = new Uint8Array(dafAn.frequencyBinCount);
-  dafAn.getByteFrequencyData(data);
-  g.clearRect(0,0,c.width,c.height);
-  var bars = 48, step = Math.floor(data.length/bars);
-  for(var i=0;i<bars;i++){
-    var h = Math.pow(data[i*step]/255, 1.4) * (c.height-8);
-    g.fillStyle = i%6===0 ? "rgba(167,139,250,.85)" : "rgba(34,211,238,.75)";
-    g.fillRect(i*(c.width/bars)+2, c.height-h, (c.width/bars)-4, h);
+function makeIR(ctx, seconds, decay){
+  var sr = ctx.sampleRate;
+  var len = Math.max(1, Math.floor(sr*seconds));
+  var buf = ctx.createBuffer(2, len, sr);
+  for(var ch=0; ch<2; ch++){
+    var d = buf.getChannelData(ch);
+    for(var i=0;i<len;i++){
+      d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, decay);
+    }
   }
-  dafRaf = requestAnimationFrame(drawMeter);
+  return buf;
 }
 
-async function dafStart(){
-  if(dafOn) return;
+function vstatus(msg, isErr){
+  var el = $("voiceStatus");
+  el.textContent = msg;
+  el.className = "status" + (isErr ? " err" : "");
+}
+
+function applyAll(){
+  if(!voiceCtx || !worklet) return;
+  var t = voiceCtx.currentTime;
+  var ratio = Math.pow(2, st.semi/12);
+  worklet.parameters.get("ratio").setTargetAtTime(ratio, t, 0.02);
+  worklet.parameters.get("ringFreq").setTargetAtTime(st.ringFreq, t, 0.02);
+  worklet.parameters.get("ringMix").setTargetAtTime(st.ringMix, t, 0.02);
+  worklet.parameters.get("drive").setTargetAtTime(st.drive, t, 0.02);
+  hp.frequency.setTargetAtTime(st.hp, t, 0.02);
+  lp.frequency.setTargetAtTime(st.lp, t, 0.02);
+  revWet.gain.setTargetAtTime(st.rev*1.6, t, 0.03);
+  echoDelay.delayTime.setTargetAtTime(st.echoTime/1000, t, 0.05);
+  echoFb.gain.setTargetAtTime(st.echoFb/100, t, 0.03);
+  echoWet.gain.setTargetAtTime(st.echoMix, t, 0.03);
+  master.gain.setTargetAtTime(st.vol, t, 0.03);
+  bypassGain.gain.setTargetAtTime(bypassOn ? 1 : 0, t, 0.02);
+  clearTimeout(revSizeTimer);
+  revSizeTimer = setTimeout(function(){
+    if(convolver) convolver.buffer = makeIR(voiceCtx, st.revSize, 2.4);
+  }, 250);
+}
+
+async function voiceStart(){
+  if(voiceOn) return;
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    dafStatus("Браузер не даёт доступ к микрофону (нужен HTTPS или localhost). Открой страницу по ссылке GitHub Pages.", true);
-    return;
+    vstatus("браузер не даёт микрофон — нужен HTTPS или localhost", true); return;
   }
   try{
-    dafStream = await navigator.mediaDevices.getUserMedia({
+    micStream = await navigator.mediaDevices.getUserMedia({
       audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:false }
     });
   }catch(e){
-    dafStatus("Микрофон недоступен: " + (e.name||"ошибка") + ". Разреши доступ в браузере и попробуй снова.", true);
-    return;
+    vstatus("микрофон недоступен: " + (e.name || "ошибка"), true); return;
   }
-  var AC = window.AudioContext || window.webkitAudioContext;
-  dafCtx = new AC();
-  await dafCtx.resume();
-  dafSrc = dafCtx.createMediaStreamSource(dafStream);
-  dafDelay = dafCtx.createDelay(2.0);
-  dafDelay.delayTime.value = (+$("#dafDelay").value)/1000;
-  dafGain = dafCtx.createGain(); dafGain.gain.value = 1.0;
-  dafAn = dafCtx.createAnalyser(); dafAn.fftSize = 512;
-  dafSrc.connect(dafDelay); dafDelay.connect(dafGain); dafGain.connect(dafAn); dafAn.connect(dafCtx.destination);
-  dafOn = true; setButtons(true);
-  dafStatus("Живьём: речь возвращается с задержкой " + $("#dafDelay").value + " мс. Читай вслух «раз-два-три-четыре-пять» и двигай ползунок.");
-  drawMeter();
+  var url = URL.createObjectURL(new Blob([$("vcWorklet").textContent], {type:"application/javascript"}));
+  voiceCtx = new AC({latencyHint:"interactive"});
+  await voiceCtx.audioWorklet.addModule(url);
+  await voiceCtx.resume();
+
+  micSrc = voiceCtx.createMediaStreamSource(micStream);
+  worklet = new AudioWorkletNode(voiceCtx, "vc-core", {outputChannelCount:[1]});
+  hp = voiceCtx.createBiquadFilter(); hp.type = "highpass";
+  lp = voiceCtx.createBiquadFilter(); lp.type = "lowpass";
+  convolver = voiceCtx.createConvolver(); convolver.buffer = makeIR(voiceCtx, st.revSize, 2.4);
+  revWet = voiceCtx.createGain(); revWet.gain.value = st.rev*1.6;
+  revDry = voiceCtx.createGain(); revDry.gain.value = 1;
+  echoDelay = voiceCtx.createDelay(1.0); echoDelay.delayTime.value = st.echoTime/1000;
+  echoFilt = voiceCtx.createBiquadFilter(); echoFilt.type = "lowpass"; echoFilt.frequency.value = 3800;
+  echoFb = voiceCtx.createGain(); echoFb.gain.value = st.echoFb/100;
+  echoWet = voiceCtx.createGain(); echoWet.gain.value = st.echoMix;
+  master = voiceCtx.createGain(); master.gain.value = st.vol;
+  bypassGain = voiceCtx.createGain(); bypassGain.gain.value = 0;
+  comp = voiceCtx.createDynamicsCompressor();
+  inAn = voiceCtx.createAnalyser(); inAn.fftSize = 512;
+  outAn = voiceCtx.createAnalyser(); outAn.fftSize = 512;
+
+  micSrc.connect(inAn);
+  micSrc.connect(worklet);
+  worklet.connect(hp); hp.connect(lp);
+  lp.connect(revDry); lp.connect(convolver); convolver.connect(revWet);
+  revDry.connect(master); revWet.connect(master);
+  master.connect(echoDelay); echoDelay.connect(echoFilt);
+  echoFilt.connect(echoFb); echoFb.connect(echoDelay);
+  echoFilt.connect(echoWet); echoWet.connect(master);
+  micSrc.connect(bypassGain); bypassGain.connect(master);
+  master.connect(comp); comp.connect(outAn); outAn.connect(voiceCtx.destination);
+
+  voiceOn = true;
+  $("voiceStart").disabled = true; $("voiceStop").disabled = false;
+  vstatus("работаю: твой голос заменяется, выбирай пресет");
+  drawMeters();
 }
 
-function dafStop(){
-  if(!dafOn) return;
-  dafOn = false; setButtons(false);
-  cancelAnimationFrame(dafRaf);
-  var c = $("#meter"); c.getContext("2d").clearRect(0,0,c.width,c.height);
-  try{ dafStream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
-  try{ dafCtx.close(); }catch(e){}
-  dafCtx=null; dafStream=null; dafSrc=null; dafDelay=null; dafGain=null; dafAn=null;
-  dafStatus("Микрофон выключен.");
+function voiceStop(){
+  if(!voiceOn) return;
+  voiceOn = false;
+  cancelAnimationFrame(metersRaf);
+  try{ micStream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+  try{ voiceCtx.close(); }catch(e){}
+  if(voiceRecActive) stopVoiceRec();
+  voiceCtx = null; micStream = null; micSrc = null;
+  worklet = hp = lp = convolver = revWet = revDry = null;
+  echoDelay = echoFilt = echoFb = echoWet = null;
+  master = bypassGain = comp = inAn = outAn = null;
+  $("voiceStart").disabled = false; $("voiceStop").disabled = true;
+  $("bypassBtn").classList.remove("active"); bypassOn = false;
+  var g1 = $("meterIn").getContext("2d"), g2 = $("meterOut").getContext("2d");
+  g1.clearRect(0,0,$("meterIn").width,$("meterIn").height);
+  g2.clearRect(0,0,$("meterOut").width,$("meterOut").height);
+  vstatus("микрофон выключен");
 }
 
-$("#dafStartBtn").addEventListener("click", dafStart);
-$("#dafStopBtn").addEventListener("click", dafStop);
-$("#dafDelay").addEventListener("input", function(){
-  var ms = +this.value;
-  $("#dafDelayOut").textContent = ms + " мс";
-  if(dafOn && dafDelay){
-    dafDelay.delayTime.linearRampToValueAtTime(ms/1000, dafCtx.currentTime + 0.05);
-    dafStatus("Живьём: задержка " + ms + " мс. Слушай, как меняется плавность речи.");
+function drawBars(cv, an, rgb){
+  var g = cv.getContext("2d");
+  g.clearRect(0,0,cv.width,cv.height);
+  var data = new Uint8Array(an.frequencyBinCount);
+  an.getByteFrequencyData(data);
+  var bars = 40, step = Math.floor(data.length/bars);
+  for(var i=0;i<bars;i++){
+    var h = Math.pow(data[i*step]/255, 1.25) * (cv.height - 6);
+    g.fillStyle = "rgba(" + rgb + "," + (0.35 + i/bars*0.55) + ")";
+    g.fillRect(i*(cv.width/bars)+1, cv.height-h-2, (cv.width/bars)-3, h+2);
   }
+}
+function drawMeters(){
+  if(!voiceOn) return;
+  drawBars($("meterIn"), inAn, "34,211,238");
+  drawBars($("meterOut"), outAn, "167,139,250");
+  metersRaf = requestAnimationFrame(drawMeters);
+}
+
+/* ============ запись голоса ============ */
+var voiceRecActive = false, voiceRec = null, voiceRecChunks = [], voiceRecDest = null;
+function toggleVoiceRec(){
+  if(voiceRecActive){ voiceRec.stop(); return; }
+  if(!voiceOn){ vstatus("включи микрофон, потом запись", true); return; }
+  try{
+    voiceRecDest = voiceCtx.createMediaStreamDestination();
+    master.connect(voiceRecDest);
+    voiceRec = new MediaRecorder(voiceRecDest.stream);
+    voiceRecChunks = [];
+    voiceRec.ondataavailable = function(e){ if(e.data && e.data.size) voiceRecChunks.push(e.data); };
+    voiceRec.onstop = function(){
+      var blob = new Blob(voiceRecChunks, {type: voiceRec.mimeType || "audio/webm"});
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "voice-" + Date.now() + ".webm";
+      a.click();
+      try{ master.disconnect(voiceRecDest); }catch(e){}
+      voiceRecDest = null; voiceRec = null;
+      voiceRecActive = false;
+      $("voiceRec").textContent = "● Запись"; $("voiceRec").classList.remove("stop");
+      vstatus("запись сохранена в загрузки");
+    };
+    voiceRec.start();
+    voiceRecActive = true;
+    $("voiceRec").textContent = "■ Стоп записи"; $("voiceRec").classList.add("stop");
+    vstatus("пишу обработанный голос…");
+  }catch(e){
+    vstatus("запись не поддерживается: " + (e.name || "ошибка"), true);
+  }
+}
+function stopVoiceRec(){ if(voiceRecActive && voiceRec) voiceRec.stop(); }
+
+/* ============ пресеты ============ */
+function markChip(name){
+  document.querySelectorAll("#presetChips .chip").forEach(function(c){
+    c.classList.toggle("active", c.dataset.preset === name);
+  });
+}
+function applyPreset(name){
+  var p;
+  if(name === "random"){
+    p = { semi: Math.round(rnd(-12,12)), ringMix: +rnd(0,0.5).toFixed(2), ringFreq: Math.round(rnd(10,150)),
+          drive: +rnd(0,0.6).toFixed(2), hp: Math.round(rnd(20,300)), lp: Math.round(rnd(2500,14000)),
+          rev: +rnd(0,0.5).toFixed(2), revSize: +rnd(0.4,2.5).toFixed(1), echoTime: Math.round(rnd(0,500)),
+          echoFb: Math.round(rnd(0,60)), echoMix: +rnd(0,0.45).toFixed(2), vol: 1 };
+  } else {
+    p = PRESETS[name];
+  }
+  for(var k in p){
+    st[k] = p[k];
+    var el = $(k);
+    if(el) el.value = p[k];
+  }
+  updOuts(); applyAll(); markChip(name);
+}
+document.querySelectorAll("#presetChips .chip").forEach(function(c){
+  c.addEventListener("click", function(){ applyPreset(c.dataset.preset); });
 });
+
+/* ============ слайдеры ============ */
+["semi","ringMix","ringFreq","drive","hp","lp","rev","revSize","echoTime","echoFb","echoMix","vol"].forEach(function(id){
+  $(id).addEventListener("input", function(){
+    st[id] = parseFloat(this.value);
+    updOuts(); applyAll(); markChip("");
+  });
+});
+$("bypassBtn").addEventListener("click", function(){
+  bypassOn = !bypassOn;
+  this.classList.toggle("active", bypassOn);
+  if(voiceCtx) bypassGain.gain.setTargetAtTime(bypassOn ? 1 : 0, voiceCtx.currentTime, 0.02);
+});
+$("voiceStart").addEventListener("click", voiceStart);
+$("voiceStop").addEventListener("click", voiceStop);
+$("voiceRec").addEventListener("click", toggleVoiceRec);
+updOuts();
+
+/* ============ лаборатория ============ */
+var labCtx = null, labBus = null, labConv = null, labWet = null, labDry = null, labComp = null;
+var labRecActive = false, labRec = null, labRecChunks = [], labRecDest = null;
+
+function ensureLab(){
+  if(labCtx) return;
+  labCtx = new AC();
+  labBus = labCtx.createGain();
+  labDry = labCtx.createGain(); labDry.gain.value = 1;
+  labConv = labCtx.createConvolver(); labConv.buffer = makeIR(labCtx, 1.8, 2.5);
+  labWet = labCtx.createGain(); labWet.gain.value = parseFloat($("labRev").value);
+  labComp = labCtx.createDynamicsCompressor();
+  labBus.connect(labDry); labDry.connect(labComp);
+  labBus.connect(labConv); labConv.connect(labWet); labWet.connect(labComp);
+  labComp.connect(labCtx.destination);
+}
+
+function noiseBuffer(ctx, dur){
+  var n = Math.floor(ctx.sampleRate * dur);
+  var b = ctx.createBuffer(1, n, ctx.sampleRate);
+  var d = b.getChannelData(0);
+  for(var i=0;i<n;i++) d[i] = Math.random()*2-1;
+  return b;
+}
+function envGain(ctx, t0, peak, a, hold, rel){
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(peak, t0 + a);
+  g.gain.setValueAtTime(peak, t0 + a + hold);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + hold + rel);
+  return g;
+}
+
+var SOUNDS = {
+  laser: function(c,out,S,t){
+    var dur = 0.28*S.time;
+    var o = c.createOscillator(); o.type = "sawtooth";
+    o.frequency.setValueAtTime(rnd(1200,1800)*S.p, t);
+    o.frequency.exponentialRampToValueAtTime(rnd(60,110)*S.p, t+dur);
+    var g = envGain(c,t,0.5,0.005,0,dur);
+    o.connect(g); g.connect(out); o.start(t); o.stop(t+dur+0.05);
+  },
+  boom: function(c,out,S,t){
+    var dur = 1.3*S.time;
+    var s = c.createBufferSource(); s.buffer = noiseBuffer(c,dur);
+    var f = c.createBiquadFilter(); f.type = "lowpass"; f.Q.value = 0.8;
+    f.frequency.setValueAtTime(rnd(900,1300)*S.bright, t);
+    f.frequency.exponentialRampToValueAtTime(45, t+dur*0.85);
+    var g = envGain(c,t,0.9,0.01,dur*0.1,dur*0.8);
+    s.connect(f); f.connect(g); g.connect(out); s.start(t); s.stop(t+dur+0.05);
+  },
+  kick: function(c,out,S,t){
+    var dur = 0.32*S.time;
+    var o = c.createOscillator(); o.type = "sine";
+    o.frequency.setValueAtTime(rnd(140,170)*S.p, t);
+    o.frequency.exponentialRampToValueAtTime(40, t+dur*0.8);
+    var g = envGain(c,t,0.95,0.004,0,dur);
+    o.connect(g); g.connect(out); o.start(t); o.stop(t+dur+0.05);
+  },
+  siren: function(c,out,S,t){
+    var dur = 1.6*S.time;
+    var o = c.createOscillator(); o.type = "triangle"; o.frequency.value = 750*S.p;
+    var lfo = c.createOscillator(); lfo.frequency.value = 3.2;
+    var lg = c.createGain(); lg.gain.value = 230*S.p;
+    lfo.connect(lg); lg.connect(o.frequency);
+    var g = envGain(c,t,0.35,0.05,Math.max(0,dur-0.2),0.15);
+    o.connect(g); g.connect(out);
+    o.start(t); lfo.start(t); o.stop(t+dur+0.05); lfo.stop(t+dur+0.05);
+  },
+  blips: function(c,out,S,t){
+    var n = 3 + Math.floor(Math.random()*4);
+    for(var i=0;i<n;i++){
+      var tt = t + i*0.075*S.time;
+      var o = c.createOscillator(); o.type = "square";
+      o.frequency.value = rnd(400,1600)*S.p;
+      var g = envGain(c,tt,0.22,0.004,0.03,0.03);
+      o.connect(g); g.connect(out); o.start(tt); o.stop(tt+0.09);
+    }
+  },
+  metal: function(c,out,S,t){
+    var dur = 0.9*S.time;
+    var s = c.createBufferSource(); s.buffer = noiseBuffer(c,dur);
+    var f = c.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 16;
+    f.frequency.setValueAtTime(rnd(380,520)*S.bright, t);
+    f.frequency.exponentialRampToValueAtTime(rnd(2200,3200)*S.bright, t+dur*0.45);
+    f.frequency.exponentialRampToValueAtTime(rnd(600,900)*S.bright, t+dur);
+    var g = envGain(c,t,0.5,0.02,dur*0.5,dur*0.45);
+    s.connect(f); f.connect(g); g.connect(out); s.start(t); s.stop(t+dur+0.05);
+  },
+  dial: function(c,out,S,t){
+    var dur = 0.9*S.time;
+    [350,440].forEach(function(f0){
+      var o = c.createOscillator(); o.frequency.value = f0*S.p;
+      var g = envGain(c,t,0.22,0.02,Math.max(0,dur-0.1),0.08);
+      o.connect(g); g.connect(out); o.start(t); o.stop(t+dur+0.05);
+    });
+  },
+  whoosh: function(c,out,S,t){
+    var dur = 1.4*S.time;
+    var s = c.createBufferSource(); s.buffer = noiseBuffer(c,dur);
+    var f = c.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 1.6;
+    f.frequency.setValueAtTime(150, t);
+    f.frequency.exponentialRampToValueAtTime(3800*S.bright, t+dur*0.8);
+    var g = envGain(c,t,0.5,dur*0.35,dur*0.1,dur*0.45);
+    s.connect(f); f.connect(g); g.connect(out); s.start(t); s.stop(t+dur+0.05);
+  },
+  fall: function(c,out,S,t){
+    var dur = 1.25*S.time;
+    var o = c.createOscillator(); o.type = "sawtooth";
+    o.frequency.setValueAtTime(rnd(600,850)*S.p, t);
+    o.frequency.exponentialRampToValueAtTime(50, t+dur);
+    var f = c.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 1400*S.bright;
+    var g = envGain(c,t,0.45,0.02,dur*0.7,dur*0.3);
+    o.connect(f); f.connect(g); g.connect(out); o.start(t); o.stop(t+dur+0.05);
+  },
+  drone: function(c,out,S,t){
+    var dur = 2.2*S.time;
+    var f = c.createBiquadFilter(); f.type = "lowpass";
+    f.frequency.value = 300*S.bright; f.Q.value = 4;
+    var g = envGain(c,t,0.4,dur*0.25,dur*0.4,dur*0.35);
+    f.connect(g); g.connect(out);
+    [55,55.8,110.3].forEach(function(f0){
+      var o = c.createOscillator(); o.type = "sawtooth"; o.frequency.value = f0*S.p;
+      o.connect(f); o.start(t); o.stop(t+dur+0.05);
+    });
+    var lfo = c.createOscillator(); lfo.frequency.value = 0.4;
+    var lg = c.createGain(); lg.gain.value = 90*S.bright;
+    lfo.connect(lg); lg.connect(f.frequency);
+    lfo.start(t); lfo.stop(t+dur+0.05);
+  },
+  plasma: function(c,out,S,t){
+    var dur = 0.7*S.time;
+    var o = c.createOscillator(); o.frequency.value = 210*S.p;
+    var lfo = c.createOscillator(); lfo.frequency.value = rnd(60,120);
+    var lg = c.createGain(); lg.gain.value = 0.45;
+    var gMod = c.createGain(); gMod.gain.value = 0.5;
+    lfo.connect(lg); lg.connect(gMod.gain);
+    var g = envGain(c,t,0.55,0.03,dur*0.6,dur*0.35);
+    o.connect(gMod); gMod.connect(g); g.connect(out);
+    o.start(t); lfo.start(t); o.stop(t+dur+0.05); lfo.stop(t+dur+0.05);
+  },
+  morse: function(c,out,S,t){
+    var f0 = rnd(600,800)*S.p, tt = t;
+    for(var i=0;i<6;i++){
+      var dash = Math.random() < 0.4;
+      var len = (dash ? 0.18 : 0.07)*S.time;
+      var o = c.createOscillator(); o.frequency.value = f0;
+      var g = envGain(c,tt,0.3,0.008,len*0.7,0.02);
+      o.connect(g); g.connect(out); o.start(tt); o.stop(tt+len+0.05);
+      tt += len + 0.07*S.time;
+    }
+  }
+};
+
+var KEYMAP = { Digit1:"laser", Digit2:"boom", Digit3:"kick", Digit4:"siren", Digit5:"blips",
+               Digit6:"metal", Digit7:"dial", Digit8:"whoosh", Digit9:"fall", Digit0:"drone",
+               KeyQ:"plasma", KeyW:"morse" };
+
+function triggerPad(name){
+  ensureLab();
+  if(labCtx.state === "suspended") labCtx.resume();
+  var S = { p: parseFloat($("labPitch").value), bright: parseFloat($("labBright").value), time: parseFloat($("labTime").value) };
+  SOUNDS[name](labCtx, labBus, S, labCtx.currentTime + 0.02);
+  var pad = document.querySelector('.pad[data-sound="' + name + '"]');
+  if(pad){
+    pad.classList.add("flash");
+    setTimeout(function(){ pad.classList.remove("flash"); }, 180);
+  }
+}
+document.querySelectorAll(".pad").forEach(function(p){
+  p.addEventListener("click", function(){ triggerPad(p.dataset.sound); });
+});
+document.addEventListener("keydown", function(e){
+  if(e.repeat) return;
+  if(!$("tab-lab").classList.contains("active")) return;
+  var t = e.target;
+  if(t && (t.tagName === "INPUT" || t.tagName === "SELECT" || t.tagName === "TEXTAREA")) return;
+  var s = KEYMAP[e.code];
+  if(s){ e.preventDefault(); triggerPad(s); }
+});
+
+/* слайдеры лаборатории */
+function labUpd(id, txt){ O(id + "Out", txt); }
+[["labPitch",function(v){ return "×" + v.toFixed(2); }],
+ ["labBright",function(v){ return "×" + v.toFixed(2); }],
+ ["labTime",function(v){ return "×" + v.toFixed(2); }],
+ ["labRev",function(v){ return Math.round(v*100) + "%"; }]].forEach(function(cfg){
+  $(cfg[0]).addEventListener("input", function(){
+    var v = parseFloat(this.value);
+    labUpd(cfg[0], cfg[1](v));
+    if(cfg[0] === "labRev" && labWet) labWet.gain.setTargetAtTime(v, labCtx.currentTime, 0.03);
+  });
+  labUpd(cfg[0], cfg[1](parseFloat($(cfg[0]).value)));
+});
+
+/* запись лаборатории */
+function toggleLabRec(){
+  if(labRecActive){ labRec.stop(); return; }
+  ensureLab();
+  try{
+    labRecDest = labCtx.createMediaStreamDestination();
+    labComp.connect(labRecDest);
+    labRec = new MediaRecorder(labRecDest.stream);
+    labRecChunks = [];
+    labRec.ondataavailable = function(e){ if(e.data && e.data.size) labRecChunks.push(e.data); };
+    labRec.onstop = function(){
+      var blob = new Blob(labRecChunks, {type: labRec.mimeType || "audio/webm"});
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "sounds-" + Date.now() + ".webm";
+      a.click();
+      try{ labComp.disconnect(labRecDest); }catch(e){}
+      labRecDest = null; labRec = null; labRecActive = false;
+      $("labRec").textContent = "● Запись"; $("labRec").classList.remove("stop");
+    };
+    labRec.start();
+    labRecActive = true;
+    $("labRec").textContent = "■ Стоп записи"; $("labRec").classList.add("stop");
+  }catch(e){}
+}
+$("labRec").addEventListener("click", toggleLabRec);
 </script>
 </body>
 </html>
