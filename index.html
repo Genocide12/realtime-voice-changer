@@ -532,7 +532,7 @@ var worklet=null, vibDelay=null, vibOsc=null, vibDepthG=null;
 var hp=null, lp=null, tremGain=null, tremOsc=null, tremDepthG=null;
 var chorusMix=null, convolver=null, revWet=null;
 var echoSend=null, echoDelay=null, echoFilt=null, echoFb=null, echoWet=null;
-var master=null, bypassGain=null, outNode=null, comp=null, inAn=null, outAn=null;
+var master=null, wetBus=null, bypassGain=null, outNode=null, comp=null, inAn=null, outAn=null;
 var metersRaf = 0, bypassOn = false, revSizeTimer = 0;
 
 function makeIR(ctx, seconds, decay){
@@ -581,6 +581,7 @@ function applyAll(){
   echoWet.gain.setTargetAtTime(st.echoMix, t, 0.03);
   master.gain.setTargetAtTime(st.vol, t, 0.03);
   bypassGain.gain.setTargetAtTime(bypassOn ? 1 : 0, t, 0.02);
+  wetBus.gain.setTargetAtTime(bypassOn ? 0 : 1, t, 0.02);
   clearTimeout(revSizeTimer);
   revSizeTimer = setTimeout(function(){
     if(convolver) convolver.buffer = makeIR(voiceCtx, st.revSize, 2.4);
@@ -632,6 +633,7 @@ async function voiceStart(){
   echoFb = voiceCtx.createGain(); echoFb.gain.value = st.echoFb/100;
   echoWet = voiceCtx.createGain(); echoWet.gain.value = st.echoMix;
   master = voiceCtx.createGain(); master.gain.value = st.vol;
+  wetBus = voiceCtx.createGain(); wetBus.gain.value = bypassOn ? 0 : 1;
   bypassGain = voiceCtx.createGain(); bypassGain.gain.value = 0;
   outNode = voiceCtx.createGain();
   comp = voiceCtx.createDynamicsCompressor();
@@ -648,7 +650,8 @@ async function voiceStart(){
   echoDelay.connect(echoFilt); echoFilt.connect(echoFb); echoFb.connect(echoDelay);
   echoFilt.connect(echoWet); echoWet.connect(outNode);
   micSrc.connect(bypassGain); bypassGain.connect(outNode);
-  master.connect(outNode);
+  master.connect(wetBus); revWet.connect(wetBus); echoWet.connect(wetBus);
+  wetBus.connect(outNode);
   outNode.connect(comp); comp.connect(outAn); outAn.connect(voiceCtx.destination);
 
   voiceOn = true;
@@ -669,7 +672,7 @@ function voiceStop(){
   worklet = vibDelay = vibOsc = vibDepthG = null;
   hp = lp = tremGain = tremOsc = tremDepthG = chorusMix = null;
   convolver = revWet = echoSend = echoDelay = echoFilt = echoFb = echoWet = null;
-  master = bypassGain = outNode = comp = inAn = outAn = null;
+  master = wetBus = bypassGain = outNode = comp = inAn = outAn = null;
   $("voiceStart").disabled = false; $("voiceStop").disabled = true;
   $("bypassBtn").classList.remove("active"); bypassOn = false;
   ["meterIn","meterOut"].forEach(function(id){
@@ -777,7 +780,7 @@ CHIP_LIST.forEach(function(item){
 $("bypassBtn").addEventListener("click", function(){
   bypassOn = !bypassOn;
   this.classList.toggle("active", bypassOn);
-  if(voiceCtx) bypassGain.gain.setTargetAtTime(bypassOn ? 1 : 0, voiceCtx.currentTime, 0.02);
+  if(voiceCtx) applyAll();
 });
 $("voiceStart").addEventListener("click", voiceStart);
 $("voiceStop").addEventListener("click", voiceStop);
@@ -879,11 +882,18 @@ var SOUNDS = {
   },
   ocean: function(c,out,S,t){
     var dur = 4*S.time;
-    var res = playNoise(c,out,S,t,dur,"brown",{type:"lowpass",f0:480*S.bright},0.28,0.9,dur*0.35,dur*0.4);
-    lfoTo(c, res.filt.frequency, 0.16, 220, t, dur);
-    var am = c.createGain(); am.gain.value = 0.6;
-    lfoTo(c, am.gain, 0.16, 0.25, t, dur);
-    res.filt.connect(am); am.connect(out);
+    var s = c.createBufferSource(); s.buffer = noiseBuffer(c,dur,"brown");
+    var f = c.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 480*S.bright;
+    var am = c.createGain(); am.gain.value = 0.35;
+    var g = c.createGain(); g.gain.value = 0.0001;
+    lfoTo(c, f.frequency, 0.16, 220, t, dur);
+    lfoTo(c, am.gain, 0.16, 0.3, t, dur);
+    s.connect(f); f.connect(am); am.connect(g); g.connect(out);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(1, t + dur*0.2);
+    g.gain.setValueAtTime(1, t + dur*0.8);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.start(t); s.stop(t+dur+0.05);
   },
   fire: function(c,out,S,t){
     var dur = 2.5*S.time;
@@ -1275,7 +1285,7 @@ function ensureSynth(){
   ef.connect(synthEchoWet); synthEchoWet.connect(synthComp);
 }
 
-function midiFreq(m){ return 440 * Math.pow(2, (m - 69) / 12) * Math.pow(2, SYN.octave - 4); }
+function midiFreq(m){ return 440 * Math.pow(2, (m - 69) / 12); }
 
 function noteOn(note){
   ensureSynth();
