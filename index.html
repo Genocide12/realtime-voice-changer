@@ -198,6 +198,47 @@ footer{border-top:1px solid var(--line);padding:20px 0 34px;color:var(--dim);fon
         </div>
       </div>
       <div class="card">
+        <h3>🎧 Нейро-обработка записи (офлайн-движок)</h3>
+        <span class="status" id="neuroEngStatus">проверяю движок…</span>
+        <div id="neuroEngBody" style="display:none">
+          <div class="toolbar" style="margin-top:8px;flex-wrap:wrap">
+            <button class="btn" id="neuroInstallBtn">⬇ Установить движок (~3 ГБ, один раз)</button>
+            <span class="status" id="neuroInstallMsg"></span>
+          </div>
+          <div class="toolbar" style="margin-top:8px;flex-wrap:wrap">
+            <select class="sel" id="neuroRef" style="max-width:100%;min-width:160px"></select>
+            <input type="file" id="neuroRefFile" accept="audio/*" style="max-width:170px">
+          </div>
+          <div class="toolbar" style="margin-top:8px;flex-wrap:wrap">
+            <select class="sel" id="neuroMode">
+              <option value="speech">речь (v1)</option>
+              <option value="song">песня — сохраняет мелодию (v2)</option>
+            </select>
+            <select class="sel" id="neuroShift">
+              <option value="0">тональность: как в записи</option>
+              <option value="auto">тональность: под референс</option>
+              <option value="2">+2 полутона</option>
+              <option value="-2">−2 полутона</option>
+              <option value="5">+5 полутонов (ж)</option>
+              <option value="-5">−5 полутонов (м)</option>
+            </select>
+            <label class="status">качество: <span id="neuroStepsV">25</span></label>
+            <input type="range" id="neuroSteps" min="10" max="50" value="25" style="max-width:110px">
+          </div>
+          <div class="toolbar" style="margin-top:8px;flex-wrap:wrap">
+            <input type="file" id="neuroFile" accept="audio/*" style="max-width:220px">
+            <button class="btn primary" id="neuroGoBtn">🎛 Обработать</button>
+          </div>
+          <span class="status" id="neuroJobMsg"></span>
+          <div id="neuroResult" style="display:none;margin-top:8px">
+            <audio id="neuroAudio" controls style="width:100%"></audio>
+            <div class="toolbar" style="margin-top:6px">
+              <a class="btn" id="neuroDl" download="neuro-vocal.wav">💾 Скачать WAV</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
         <h3>🔁 Диктор: твой голос → другой голос</h3>
         <div class="toolbar" style="margin-bottom:8px;flex-wrap:wrap">
           <select class="sel" id="dictorVoice" style="max-width:100%;min-width:180px"></select>
@@ -814,6 +855,101 @@ fillMicSel();
 if(navigator.mediaDevices && navigator.mediaDevices.addEventListener){
   try{ navigator.mediaDevices.addEventListener("devicechange", fillMicSel); }catch(e){}
 }
+
+/* нейро-движок: офлайн-обработка записей (только в приложении VoiceChanger.exe) */
+var neuroReady = false;
+function neuroFmt(st){
+  return "движок: " + (st.device === "cuda" ? "GPU (NVIDIA)" : st.device === "cpu" ? "CPU (медленнее)" : "?") + " | референсов: " + (st.references || []).length;
+}
+function neuroFillRefs(st){
+  var sel = $("neuroRef"), keep = sel.value;
+  sel.innerHTML = "";
+  (st.references || []).forEach(function(n){
+    var o = document.createElement("option"); o.value = n; o.textContent = n; sel.appendChild(o);
+  });
+  if(keep) sel.value = keep;
+}
+function neuroRefresh(){
+  fetch("/api/neuro/status").then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(st){
+    $("neuroEngBody").style.display = "";
+    if(st.installed){
+      neuroReady = true;
+      neuroFillRefs(st);
+      $("neuroEngStatus").textContent = "готов ✓ " + neuroFmt(st);
+      $("neuroInstallBtn").style.display = "none";
+      $("neuroInstallMsg").textContent = "";
+    } else {
+      $("neuroEngStatus").textContent = st.installing
+        ? "установка: " + (st.progress || "готовлюсь…")
+        : "для нейро-обработки записей нужна одна установка движка (~3 ГБ, локально, бесплатно)";
+    }
+  }).catch(function(){
+    $("neuroEngStatus").textContent = "на сайте недоступно — работает в приложении VoiceChanger.exe";
+  });
+}
+neuroRefresh();
+$("neuroInstallBtn").addEventListener("click", function(){
+  $("neuroInstallMsg").textContent = "запускаю установку…";
+  fetch("/api/neuro/install", {method:"POST"}).then(function(r){return r.json();}).then(function(j){
+    if(!j.started) $("neuroInstallMsg").textContent = j.reason || "";
+  }).catch(function(){ $("neuroInstallMsg").textContent = "нет связи с приложением"; });
+  var t = setInterval(function(){
+    fetch("/api/neuro/status").then(function(r){return r.json();}).then(function(st){
+      $("neuroInstallMsg").textContent = st.installed ? "" : (st.progress || "…");
+      if(st.installed){
+        clearInterval(t);
+        neuroReady = true;
+        neuroFillRefs(st);
+        $("neuroEngStatus").textContent = "готов ✓ " + neuroFmt(st);
+        $("neuroInstallBtn").style.display = "none";
+      }
+    }).catch(function(){ clearInterval(t); });
+  }, 3000);
+});
+$("neuroSteps").addEventListener("input", function(){ $("neuroStepsV").textContent = this.value; });
+var neuroJobId = "", neuroTimer = null;
+function neuroPoll(){
+  fetch("/api/neuro/job?id=" + encodeURIComponent(neuroJobId)).then(function(r){return r.json();}).then(function(j){
+    if(j.msg) $("neuroJobMsg").textContent = j.msg;
+    if(j.state === "done"){
+      clearInterval(neuroTimer);
+      $("neuroResult").style.display = "";
+      $("neuroAudio").src = "/api/neuro/file?id=" + encodeURIComponent(neuroJobId);
+      $("neuroDl").href = "/api/neuro/file?id=" + encodeURIComponent(neuroJobId);
+      $("neuroGoBtn").disabled = false;
+      $("neuroEngStatus").textContent = "обработка завершена ✓";
+    } else if(j.state === "error" || j.state === "unknown"){
+      clearInterval(neuroTimer);
+      $("neuroGoBtn").disabled = false;
+      O("neuroJobMsg", "не получилось: " + (j.msg || j.state), true);
+    }
+  }).catch(function(){});
+}
+$("neuroGoBtn").addEventListener("click", function(){
+  if(!neuroReady){ O("neuroJobMsg", "сначала установи движок", true); return; }
+  var f = $("neuroFile").files[0];
+  if(!f){ O("neuroJobMsg", "выбери аудиофайл с записью", true); return; }
+  var rf = $("neuroRefFile").files[0];
+  if(!$("neuroRef").value && !rf){ O("neuroJobMsg", "выбери референс голоса (список или свой файл)", true); return; }
+  var fd = new FormData();
+  fd.append("file", f); fd.append("name", f.name);
+  fd.append("mode", $("neuroMode").value);
+  fd.append("steps", $("neuroSteps").value);
+  fd.append("shift", $("neuroMode").value === "speech" ? $("neuroShift").value : "0");
+  fd.append("reference", rf ? "" : $("neuroRef").value);
+  if(rf){ fd.append("reffile", rf); fd.append("refname", rf.name); }
+  $("neuroGoBtn").disabled = true;
+  O("neuroJobMsg", "отправляю запись в движок…");
+  fetch("/api/neuro/convert", {method:"POST", body: fd}).then(function(r){return r.json();}).then(function(j){
+    if(j.error){ $("neuroGoBtn").disabled = false; O("neuroJobMsg", j.error, true); return; }
+    neuroJobId = j.id;
+    O("neuroJobMsg", "обрабатываю — на GPU около минуты, на CPU дольше. Не закрывай приложение");
+    neuroTimer = setInterval(neuroPoll, 2000);
+  }).catch(function(){ $("neuroGoBtn").disabled = false; O("neuroJobMsg", "нет связи с приложением", true); });
+});
+$("neuroMode").addEventListener("change", function(){
+  $("neuroShift").disabled = (this.value === "song");
+});
 
 async function voiceStart(){
   if(voiceOn) return;

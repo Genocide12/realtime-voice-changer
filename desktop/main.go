@@ -32,6 +32,7 @@ func main() {
 		_, _ = w.Write(indexHTML)
 	})
 	registerAPI(mux)
+	registerNeuroAPI(mux)
 
 	srv := &http.Server{Handler: mux}
 	go func() {
