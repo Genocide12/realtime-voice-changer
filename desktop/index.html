@@ -13,80 +13,80 @@
   --mono:ui-monospace,"JetBrains Mono","Cascadia Code",Consolas,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.55}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.42;overflow-x:hidden}
 a{color:var(--cyan);text-decoration:none}
 a:hover{text-decoration:underline}
 kbd{font-family:var(--mono);font-size:.78em;background:#1a2234;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 6px;color:#bae6fd}
 .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
 
-header{padding:26px 0 16px;background:
+header{padding:10px 0 6px;background:
   radial-gradient(800px 300px at 12% -10%,rgba(34,211,238,.12),transparent 60%),
   radial-gradient(600px 280px at 92% 0%,rgba(167,139,250,.11),transparent 60%)}
-h1{font-size:clamp(22px,3.4vw,32px);font-weight:800;letter-spacing:-.4px}
+h1{font-size:clamp(18px,2.6vw,24px);font-weight:800;letter-spacing:-.4px}
 h1 .grad{background:linear-gradient(90deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
-.sub{color:var(--muted);font-size:14.5px;max-width:980px;margin-top:6px}
+
 
 nav{position:sticky;top:0;z-index:50;background:rgba(11,14,20,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-nav .wrap{display:flex;gap:8px;padding:10px 20px;flex-wrap:wrap}
-.tbtn{font:inherit;font-weight:600;font-size:14.5px;background:none;border:1px solid transparent;border-radius:9px;color:var(--muted);padding:7px 16px;cursor:pointer}
+nav .wrap{display:flex;gap:6px;padding:7px 20px;flex-wrap:wrap}
+.tbtn{font:inherit;font-weight:600;font-size:13px;background:none;border:1px solid transparent;border-radius:9px;color:var(--muted);padding:6px 12px;cursor:pointer}
 .tbtn:hover{color:var(--text);border-color:var(--line)}
 .tbtn.active{color:var(--cyan);border-color:#155e75;background:rgba(34,211,238,.08)}
 
-main{padding:18px 0 30px}
+main{padding:10px 0 14px}
 .tab{display:none}
 .tab.active{display:block}
-.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
-.status{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.status{font-family:var(--mono);font-size:12px;color:var(--muted)}
 .status.err{color:var(--red)}
-.btn{font:inherit;font-weight:600;border-radius:10px;padding:10px 18px;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text)}
+.btn{font:inherit;font-weight:600;border-radius:10px;padding:8px 14px;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-size:13.5px}
 .btn:hover{filter:brightness(1.18)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn.primary{background:linear-gradient(90deg,#0891b2,#7c3aed);border-color:transparent}
 .btn.stop{background:rgba(248,113,113,.14);border-color:rgba(248,113,113,.45);color:var(--red)}
 .btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(34,211,238,.08)}
 
-.layout{display:grid;grid-template-columns:360px 1fr;gap:16px}
-@media (max-width:920px){.layout{grid-template-columns:1fr}}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:16px}
-.card h3{font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px}
+.layout{display:grid;grid-template-columns:360px 1fr;gap:12px}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.card h3{font-size:12.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:9px}
 .col{min-width:0}
 
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{font:inherit;font-size:13.5px;font-weight:600;border-radius:999px;padding:7px 14px;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text)}
+.chip{font:inherit;font-size:12.5px;font-weight:600;border-radius:999px;padding:6px 12px;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text)}
 .chip:hover{border-color:var(--cyan);color:var(--cyan)}
 .chip.active{border-color:var(--cyan);color:var(--cyan);background:rgba(34,211,238,.1)}
 .chip.alt{border-color:rgba(167,139,250,.4)}
 
-.sect{font-family:var(--mono);font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin:14px 0 6px;padding-top:10px;border-top:1px dashed var(--line)}
+.sect{font-family:var(--mono);font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin:9px 0 5px;padding-top:8px;border-top:1px dashed var(--line)}
 .sect:first-child{border-top:none;margin-top:0;padding-top:0}
 
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 18px}
-.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 18px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px 14px}
 @media (max-width:920px){.grid3,.grid4{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:540px){.grid3,.grid4{grid-template-columns:1fr}}
-.fld label{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--muted);margin-bottom:4px;gap:6px}
+.fld label{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;color:var(--muted);margin-bottom:3px;gap:6px}
 .fld label output{font-family:var(--mono);color:var(--cyan);font-size:12px;white-space:nowrap}
-.fld input[type=range]{width:100%;height:22px;accent-color:var(--cyan)}
+.fld input[type=range]{width:100%;height:20px;accent-color:var(--cyan)}
 .fld select,.sel{font:inherit;font-size:13.5px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:8px 12px;cursor:pointer}
-textarea.tta{width:100%;min-height:110px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;color:var(--text);font:inherit;font-size:15px;padding:12px 14px;resize:vertical;margin-bottom:12px}
+textarea.tta{width:100%;min-height:92px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;color:var(--text);font:inherit;font-size:14px;padding:10px 12px;resize:vertical;margin-bottom:10px}
 textarea.tta:focus{outline:none;border-color:var(--cyan)}
-canvas.meter{width:100%;height:52px;display:block;background:var(--panel2);border:1px solid var(--line);border-radius:9px}
+canvas.meter{width:100%;height:40px;display:block;background:var(--panel2);border:1px solid var(--line);border-radius:9px}
 
-.pads{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.pads{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
 @media (max-width:920px){.pads{grid-template-columns:repeat(4,1fr)}}
 @media (max-width:680px){.pads{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:480px){.pads{grid-template-columns:repeat(2,1fr)}}
-.pad{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:82px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;cursor:pointer}
+.pad{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-height:64px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;cursor:pointer}
 .pad:hover{border-color:var(--violet)}
 .pad.flash{border-color:var(--cyan);background:rgba(34,211,238,.12);transform:scale(.97)}
-.pad .emo{font-size:21px}
-.pad b{font-size:12.5px;font-weight:600;text-align:center}
+.pad .emo{font-size:18px}
+.pad b{font-size:11.5px;font-weight:600;text-align:center}
 .pad kbd{position:absolute;top:5px;right:5px;opacity:.6}
 .pad.listening{border-color:var(--amber);animation:padListen 1s ease-in-out infinite}
 @keyframes padListen{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.5)}50%{box-shadow:0 0 0 6px rgba(245,158,11,0)}}
 
-.pianoWrap{position:relative;height:170px;margin-top:4px;user-select:none;touch-action:none}
-.pkey{position:absolute;top:0;width:6.4%;height:100%;background:#eef2f7;border:1px solid #475569;border-radius:0 0 7px 7px;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px}
+.pianoWrap{position:relative;height:150px;margin-top:4px;user-select:none;touch-action:none}
+.pkey{position:absolute;top:0;width:6.4%;height:100%;background:#eef2f7;border:1px solid #475569;border-radius:0 0 7px 7px;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px}
 .pkey b{font-size:11px;color:#334155;font-family:var(--mono);font-weight:600}
 .pkey.down{background:#a5f3fc}
 .pkey.black{top:0;height:60%;background:#1e293b;border-color:#0f172a;z-index:2;border-radius:0 0 6px 6px}
@@ -116,6 +116,25 @@ footer{border-top:1px solid var(--line);padding:20px 0 34px;color:var(--dim);fon
 @keyframes barSlide{0%{transform:translateX(-110%)}100%{transform:translateX(290%)}}
 .spin{animation:spinPulse 1.6s ease-in-out infinite}
 @keyframes spinPulse{0%,100%{opacity:.6;transform:scale(.97)}50%{opacity:1;transform:scale(1)}}
+/* ============ огненная тема синтезатора ============ */
+.pianoWrap.fire .pkey{background:linear-gradient(180deg,#4a1602 0%,#8a2c07 55%,#3d1002 100%);border-color:#b45309;box-shadow:inset 0 -20px 26px -14px rgba(251,146,60,.55);animation:ember 2.2s ease-in-out infinite}
+.pianoWrap.fire .pkey b{color:#fdba74;text-shadow:0 0 6px rgba(251,146,60,.8)}
+.pianoWrap.fire .pkey.down{background:linear-gradient(180deg,#fbbf24,#ea580c 70%,#7c2d12);box-shadow:0 0 22px rgba(251,146,60,.75),inset 0 0 12px rgba(255,237,213,.6)}
+.pianoWrap.fire .pkey.black{background:linear-gradient(180deg,#1f0a02,#571806);border-color:#9a3412;box-shadow:inset 0 -14px 18px -10px rgba(251,146,60,.4)}
+.pianoWrap.fire .pkey.black.down{background:linear-gradient(180deg,#fb923c,#c2410c);box-shadow:0 0 18px rgba(251,146,60,.8)}
+@keyframes ember{0%,100%{box-shadow:inset 0 -20px 26px -14px rgba(251,146,60,.5)}50%{box-shadow:inset 0 -22px 30px -12px rgba(251,146,60,.75),0 0 14px rgba(234,88,12,.3)}}
+
+@media (max-width:640px){
+  .pianoWrap{height:120px}
+  .pads{gap:6px}
+  .pad{min-height:58px}
+  .pad .emo{font-size:16px}
+  .grid4{grid-template-columns:repeat(2,1fr)}
+  header h1{font-size:18px}
+  nav .wrap{gap:4px}
+  nav .tbtn{padding:5px 9px;font-size:12px}
+}
+@media (max-width:420px){.pads{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -130,7 +149,6 @@ footer{border-top:1px solid var(--line);padding:20px 0 34px;color:var(--dim);fon
 <header>
   <div class="wrap">
     <h1>Голос-подменщик <span class="grad">real-time</span></h1>
-    <p class="sub">Твой голос заменяется в момент речи: 20 голосов-пресетов и полная ручная настройка эффектов. Рядом — генератор звуков, синтезатор-клавиатура и синтез речи любым голосом системы. Всё считается на месте, звук никуда не отправляется.</p>
   </div>
 </header>
 
@@ -140,7 +158,6 @@ footer{border-top:1px solid var(--line);padding:20px 0 34px;color:var(--dim);fon
     <button class="tbtn" data-tab="lab">🎛 Генератор звуков</button>
     <button class="tbtn" data-tab="synth">🎹 Синтезатор</button>
     <button class="tbtn" data-tab="tts">🗣 Речь</button>
-    <button class="tbtn" data-tab="neuro">🧠 Нейро-голос</button>
   </div>
 </nav>
 
@@ -164,13 +181,23 @@ footer{border-top:1px solid var(--line);padding:20px 0 34px;color:var(--dim);fon
         <div class="chips" id="presetChips"></div>
       </div>
       <div class="card">
-        <h3>Спеть системным голосом</h3>
+        <h3>🔁 Диктор: твой голос → другой голос</h3>
         <div class="toolbar" style="margin-bottom:8px;flex-wrap:wrap">
-          <select class="sel" id="singVoice" style="max-width:100%;min-width:220px"></select>
-          <button class="btn" id="singBtn">🎤 Спеть</button>
+          <select class="sel" id="dictorVoice" style="max-width:100%;min-width:180px"></select>
+          <button class="btn primary" id="dictorBtn">▶ Включить</button>
         </div>
-        <textarea class="tta" id="singText" style="min-height:64px">Проверка голоса. Один два три.</textarea>
-        <span class="status" id="singStatus">озвучит текст выбранным голосом системы через текущие эффекты</span>
+        <span class="status" id="dictorStatus">говори в микрофон — каждая фраза произносится выбранным голосом (нужен интернет для распознавания)</span>
+      </div>
+      <div class="card">
+        <h3>🧹 Очистка голоса от шума</h3>
+        <div class="toolbar" style="margin-bottom:8px">
+          <button class="btn" id="cleanBtn">🧹 Включить очистку</button>
+          <span class="status" id="cleanStatus">убирает гул, шипение и фоновый шум в реальном времени</span>
+        </div>
+        <div id="cleanSliders" class="grid3"></div>
+        <div class="toolbar" style="margin-top:8px">
+          <button class="btn" id="cleanSave" disabled>💾 Очистить запись → .wav</button>
+        </div>
       </div>
       <div class="card">
         <h3>Мониторы</h3>
@@ -215,7 +242,8 @@ footer{border-top:1px solid var(--line);padding:20px 0 34px;color:var(--dim);fon
 <section id="tab-synth" class="tab">
   <div class="toolbar">
     <button class="btn" id="synthRec">● Запись</button>
-    <span class="status">играй мышкой или клавишами — белые: <kbd>Shift</kbd> <kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd> <kbd>B</kbd> <kbd>N</kbd> <kbd>M</kbd> <kbd>,</kbd> <kbd>.</kbd> <kbd>/</kbd> <kbd>Shift→</kbd> <kbd>Num1</kbd> <kbd>Num2</kbd> <kbd>Num3</kbd> · чёрные: <kbd>A</kbd>–<kbd>'</kbd> · октава: <kbd>←</kbd>/<kbd>→</kbd></span>
+    <button class="btn" id="fireBtn">🔥 Огонь</button>
+    <span class="status">играй мышкой или клавишами — белые: <kbd>Shift</kbd> <kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd> <kbd>B</kbd> <kbd>N</kbd> <kbd>M</kbd> <kbd>,</kbd> <kbd>.</kbd> <kbd>/</kbd> <kbd>Shift→</kbd> <kbd>Num1</kbd> <kbd>Num2</kbd> <kbd>Num3</kbd> · чёрные: <kbd>A</kbd>–<kbd>;</kbd> · октава: <kbd>←</kbd>/<kbd>→</kbd></span>
   </div>
 
   <div class="card">
@@ -257,7 +285,7 @@ footer{border-top:1px solid var(--line);padding:20px 0 34px;color:var(--dim);fon
     <div id="ttsSliders" class="grid3"></div>
   </div>
 
-  <div class="card">
+  <div class="card desk-only" style="display:none">
     <h3>Эффекты речи (как в разделе «Голос»)</h3>
     <div class="toolbar" style="margin-bottom:8px;flex-wrap:wrap">
       <label style="font-size:12.5px;color:var(--muted)">Пресет:</label>
@@ -274,41 +302,10 @@ footer{border-top:1px solid var(--line);padding:20px 0 34px;color:var(--dim);fon
   </div>
 </section>
 
-<!-- ================= НЕЙРО-ГОЛОС ================= -->
-<section id="tab-neuro" class="tab">
-  <div class="toolbar">
-    <button class="btn primary" id="neuroStart">🚀 Запустить движок</button>
-    <button class="btn stop" id="neuroStopBtn" disabled>■ Остановить</button>
-    <button class="btn" id="neuroOpen">Открыть интерфейс движка</button>
-    <span class="status" id="neuroStatus">статус: неизвестен</span>
-  </div>
-
-  <div class="card">
-    <h3>Что это</h3>
-    <p style="font-size:14px;color:var(--muted);margin-bottom:12px">
-      Нейро-голос — настоящая ИИ-подмена голоса (клонирование тембра по образцу).
-      Первый запуск скачает и установит движок <b>w-okada voice-changer</b> (~1 ГБ, нужен интернет),
-      дальше он стартует локально на этом компьютере. Модели (.pth) скачиваются в самом движке.
-      Обычные эффекты вкладки «Голос» работают сразу и без этого.
-    </p>
-    <h3>Журнал движка</h3>
-    <pre id="neuroLog" style="font-family:var(--mono);font-size:12px;line-height:1.5;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:12px;max-height:220px;overflow:auto;color:#9fb3c8;white-space:pre-wrap">…</pre>
-  </div>
-
-  <div class="card" id="neuroEmbedCard" style="display:none">
-    <h3>Интерфейс движка (встроен в окно программы)</h3>
-    <iframe id="neuroFrame" src="about:blank" style="width:100%;height:640px;border:1px solid var(--line);border-radius:10px;background:#fff"></iframe>
-  </div>
-</section>
 
 </div>
 </main>
 
-<footer>
-  <div class="wrap">
-    Голос доступен только на этом устройстве · используй свой голос или голос с разрешения владельца · <a href="https://github.com/Genocide12/realtime-voice-changer">исходники</a>
-  </div>
-</footer>
 
 <script type="audio/worklet" id="vcWorklet">
 class VCCore extends AudioWorkletProcessor {
@@ -322,7 +319,11 @@ class VCCore extends AudioWorkletProcessor {
       {name:'drive',    defaultValue:0,   minValue:0,    maxValue:1,    automationRate:'k-rate'},
       {name:'bits',     defaultValue:16,  minValue:1,    maxValue:16,   automationRate:'k-rate'},
       {name:'down',     defaultValue:1,   minValue:1,    maxValue:64,   automationRate:'k-rate'},
-      {name:'gate',     defaultValue:0,   minValue:0,    maxValue:1,    automationRate:'k-rate'}
+      {name:'gate',     defaultValue:0,   minValue:0,    maxValue:1,    automationRate:'k-rate'},
+      {name:'cleanOn',  defaultValue:0,   minValue:0,    maxValue:1,    automationRate:'k-rate'},
+      {name:'cleanHP',  defaultValue:90,  minValue:20,   maxValue:500,  automationRate:'k-rate'},
+      {name:'cleanLP',  defaultValue:8000,minValue:2000, maxValue:16000,automationRate:'k-rate'},
+      {name:'denoise',  defaultValue:0.6, minValue:0,    maxValue:1,    automationRate:'k-rate'}
     ];
   }
   constructor(){
@@ -337,6 +338,10 @@ class VCCore extends AudioWorkletProcessor {
     this.gateGain = 1;
     this.crushCnt = 0;
     this.crushVal = 0;
+    // очистка голоса
+    this.dcX = 0; this.dcY = 0;
+    this.hpY = 0; this.hpX = 0; this.lpY = 0; this.lpY2 = 0;
+    this.clnEnv = 0; this.clnFloor = 0.0005; this.clnGain = 1;
     // анализ высоты тона для автотюна
     this.anN = 2048;
     this.anBuf = new Float32Array(this.anN);
@@ -396,13 +401,50 @@ class VCCore extends AudioWorkletProcessor {
     const bits = params.bits[0];
     const down = Math.max(1, params.down[0] | 0);
     const gt = params.gate[0];
+    const cleanOn = params.cleanOn[0];
+    const cHP = params.cleanHP[0], cLP = params.cleanLP[0], dnz = params.denoise[0];
+    const aHP = Math.exp(-2*Math.PI*cHP/sampleRate);
+    const aLP = 1 - Math.exp(-2*Math.PI*cLP/sampleRate);
+    const clnThrK = 1.2 + dnz*5;
     const g = this.grain, N = this.N, buf = this.buf;
     const gateThr = gt <= 0.003 ? -1 : gt * 0.2;
     const levels = Math.pow(2, bits - 1);
     const crushOn = bits < 15.5 || down > 1.5;
 
     for(let i=0;i<n;i++){
-      const xin = x0 ? x0[i] : 0;
+      let xin = x0 ? x0[i] : 0;
+
+      /* === очистка голоса: DC-блокер, НЧ/ВЧ-срез, шумодав по адаптивному полу === */
+      if(cleanOn > 0.5){
+        // DC-blocker: убирает гул и смещение
+        const dc = xin - this.dcX + 0.995*this.dcY;
+        this.dcX = xin; this.dcY = dc;
+        xin = dc;
+        // HP (однополюсный)
+        const hpv = aHP * (this.hpY + xin - this.hpX);
+        this.hpX = xin; this.hpY = hpv;
+        xin = hpv;
+        // LP (двухкаскадный однополюсный)
+        const lp1 = this.lpY + aLP * (xin - this.lpY);
+        this.lpY = lp1;
+        const lp2 = this.lpY2 + aLP * (lp1 - this.lpY2);
+        this.lpY2 = lp2;
+        xin = lp2;
+        // шумодав: быстрый огибающий уровень vs медленный шумовой пол
+        const ax = xin < 0 ? -xin : xin;
+        this.clnEnv += 0.01 * (ax - this.clnEnv);
+        if(this.clnEnv > this.clnFloor){
+          this.clnFloor += 0.0008 * (this.clnEnv - this.clnFloor); // пол ползёт вверх медленно
+        } else {
+          this.clnFloor += 0.01 * (this.clnFloor - this.clnEnv) * 0.5; // и спадает при тишине
+        }
+        if(this.clnFloor < 1e-5) this.clnFloor = 1e-5;
+        const open = this.clnEnv > this.clnFloor * clnThrK;
+        const kk = open ? 0.05 : 0.0015;
+        this.clnGain += kk * ((open ? 1 : 0) - this.clnGain);
+        xin *= this.clnGain;
+      }
+
       // шумовой гейт
       const ax = xin < 0 ? -xin : xin;
       this.gateEnv += 0.004 * (ax - this.gateEnv);
@@ -665,6 +707,10 @@ function applyAll(){
   wp("bits").setTargetAtTime(st.bits, t, 0.02);
   wp("down").setTargetAtTime(st.down, t, 0.02);
   wp("gate").setTargetAtTime(st.gate, t, 0.02);
+  wp("cleanOn").setTargetAtTime(cln.on ? 1 : 0, t, 0.02);
+  wp("cleanHP").setTargetAtTime(cln.hp, t, 0.02);
+  wp("cleanLP").setTargetAtTime(cln.lp, t, 0.02);
+  wp("denoise").setTargetAtTime(cln.dn, t, 0.02);
   hp.frequency.setTargetAtTime(st.hp, t, 0.02);
   lp.frequency.setTargetAtTime(st.lp, t, 0.02);
   vibOsc.frequency.setTargetAtTime(st.vibRate, t, 0.03);
@@ -801,6 +847,7 @@ function drawMeters(){
 
 /* ============ запись голоса ============ */
 var voiceRecActive = false, voiceRec = null, voiceRecChunks = [], voiceRecDest = null;
+var voiceLastBlob = null;
 function saveBlob(blob, name){
   var a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -818,6 +865,8 @@ function toggleVoiceRec(){
     voiceRec.ondataavailable = function(e){ if(e.data && e.data.size) voiceRecChunks.push(e.data); };
     voiceRec.onstop = function(){
       var blob = new Blob(voiceRecChunks, {type: voiceRec.mimeType || "audio/webm"});
+      voiceLastBlob = blob;
+      $("cleanSave").disabled = false;
       saveBlob(blob, "voice-" + Date.now() + ".webm");
       try{ comp.disconnect(voiceRecDest); }catch(e){}
       voiceRecDest = null; voiceRec = null;
@@ -835,107 +884,210 @@ function toggleVoiceRec(){
 }
 function stopVoiceRec(){ if(voiceRecActive && voiceRec) voiceRec.stop(); }
 
-/* ============ спеть системным голосом (через эффекты) ============ */
-var singVoices = [], singCtx = null;
-function fillSingVoices(){
-  fetch("/api/voices").then(function(r){ return r.json(); }).then(function(d){
-    singVoices = d.voices || [];
-    var sel = $("singVoice");
-    sel.innerHTML = "";
-    if(singVoices.length === 0){
-      var o = document.createElement("option");
-      o.textContent = "нет системных голосов (десктоп-версия)";
-      sel.appendChild(o);
-      sel.disabled = true;
-      return;
+/* ============ десктоп-режим и общие утилиты ============ */
+var DESKTOP = false;
+var sapiVoiceNames = [];
+fetch("/api/voices").then(function(r){
+  if(!r.ok) return null;
+  return r.json();
+}).then(function(d){
+  if(!d) return;
+  DESKTOP = true;
+  sapiVoiceNames = (d.voices || []).map(function(v){ return v.name; });
+  document.querySelectorAll(".desk-only").forEach(function(el){ el.style.display = ""; });
+  fillDictorVoices();
+}).catch(function(){});
+
+function encodeWAV(buf){
+  var nch = buf.numberOfChannels, sr = buf.sampleRate, len = buf.length;
+  var bytes = 44 + len*nch*2;
+  var ab = new ArrayBuffer(bytes), v = new DataView(ab);
+  function str(o, t){ for(var i=0;i<t.length;i++) v.setUint8(o+i, t.charCodeAt(i)); }
+  str(0,"RIFF"); v.setUint32(4, bytes-8, true); str(8,"WAVE"); str(12,"fmt ");
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,nch,true);
+  v.setUint32(24,sr,true); v.setUint32(28,sr*nch*2,true); v.setUint16(32,nch*2,true);
+  v.setUint16(34,16,true); str(36,"data"); v.setUint32(40,len*nch*2,true);
+  var chs = []; for(var c=0;c<nch;c++) chs.push(buf.getChannelData(c));
+  var off = 44;
+  for(var i=0;i<len;i++){
+    for(var c=0;c<nch;c++){
+      var sm = Math.max(-1, Math.min(1, chs[c][i]));
+      v.setInt16(off, sm < 0 ? sm*0x8000 : sm*0x7FFF, true);
+      off += 2;
     }
-    singVoices.forEach(function(v){
-      var opt = document.createElement("option");
-      opt.value = v.name;
-      var extra = [];
-      if(v.lang) extra.push(v.lang);
-      if(v.gender) extra.push(v.gender === "Female" ? "жен" : v.gender === "Male" ? "муж" : v.gender);
-      opt.textContent = v.name + (extra.length ? " (" + extra.join(", ") + ")" : "");
-      sel.appendChild(opt);
-    });
-  }).catch(function(){
-    var sel = $("singVoice");
-    sel.innerHTML = "";
-    var o = document.createElement("option");
-    o.textContent = "недоступно в веб-версии";
-    sel.appendChild(o);
-    sel.disabled = true;
-  });
+  }
+  return new Blob([ab], {type:"audio/wav"});
 }
-fillSingVoices();
 
-$("singBtn").addEventListener("click", async function(){
-  var btn = this;
-  if($("singVoice").disabled) return;
-  var text = $("singText").value.trim();
-  if(!text) return;
-  btn.disabled = true;
-  O("singStatus", "генерирую голос…");
+/* ============ 🧹 очистка голоса от шума ============ */
+var cln = { on:false, hp:90, lp:8000, dn:0.6 };
+mkSlider($("cleanSliders"), "clnHP", "НЧ-срез (гул)", 20, 300, 5, cln.hp, fHz, function(v){ cln.hp = v; applyClean(); });
+mkSlider($("cleanSliders"), "clnLP", "ВЧ-срез (шипение)", 3000, 16000, 250, cln.lp, fKHz, function(v){ cln.lp = v; applyClean(); });
+mkSlider($("cleanSliders"), "clnDN", "Подавление шума", 0, 1, 0.05, cln.dn, fPct, function(v){ cln.dn = v; applyClean(); });
+function applyClean(){
+  if(!voiceCtx || !worklet) return;
+  var t = voiceCtx.currentTime;
+  var wp = function(n){ return worklet.parameters.get(n); };
+  wp("cleanOn").setTargetAtTime(cln.on ? 1 : 0, t, 0.02);
+  wp("cleanHP").setTargetAtTime(cln.hp, t, 0.02);
+  wp("cleanLP").setTargetAtTime(cln.lp, t, 0.02);
+  wp("denoise").setTargetAtTime(cln.dn, t, 0.02);
+}
+$("cleanBtn").addEventListener("click", function(){
+  cln.on = !cln.on;
+  this.textContent = cln.on ? "🧹 Выключить очистку" : "🧹 Включить очистку";
+  this.classList.toggle("active", cln.on);
+  O("cleanStatus", cln.on ? "очистка работает: гул и шум убираются на лету" : "убирает гул, шипение и фоновый шум в реальном времени");
+  applyClean();
+});
+$("cleanSave").addEventListener("click", async function(){
+  if(!voiceLastBlob){ O("cleanStatus", "сначала запиши свой голос (● Запись)", true); return; }
+  this.disabled = true;
+  O("cleanStatus", "обрабатываю запись…");
   try{
-    var resp = await fetch("/api/tts", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ text: text, voice: $("singVoice").value, rate: 1, pitch: 1, volume: 1 })
-    });
-    if(!resp.ok) throw new Error((await resp.text()).replace("tts failed: ", ""));
-    var buf = await resp.arrayBuffer();
+    var ab = await voiceLastBlob.arrayBuffer();
+    var probe = new AC();
+    var buf = await probe.decodeAudioData(ab);
+    var oc = new OfflineAudioContext(1, Math.ceil(buf.duration*buf.sampleRate)+4800, buf.sampleRate);
+    var url = URL.createObjectURL(new Blob([$("vcWorklet").textContent], {type:"application/javascript"}));
+    await oc.audioWorklet.addModule(url);
+    var src = oc.createBufferSource(); src.buffer = buf;
+    var w = new AudioWorkletNode(oc, "vc-core", {outputChannelCount:[1]});
+    var wp = function(n){ return w.parameters.get(n); };
+    wp("cleanOn").value = 1;
+    wp("cleanHP").value = cln.hp;
+    wp("cleanLP").value = cln.lp;
+    wp("denoise").value = Math.max(0.3, cln.dn);
+    wp("gate").value = 0;
+    src.connect(w); w.connect(oc.destination);
+    src.start(0);
+    var rendered = await oc.startRendering();
+    saveBlob(encodeWAV(rendered), "voice-clean-" + Date.now() + ".wav");
+    O("cleanStatus", "готово: очищенная запись сохранена в .wav");
+    try{ probe.close(); }catch(e){}
+  }catch(e){
+    O("cleanStatus", "не удалось обработать: " + (e.message || e), true);
+  }
+  this.disabled = false;
+});
 
-    // контекст: используем активный голосовой, чтобы шли текущие эффекты
-    if(voiceOn && voiceCtx){
-      var audio = await voiceCtx.decodeAudioData(buf);
-      var src = voiceCtx.createBufferSource();
-      src.buffer = audio;
-      src.connect(worklet); // сразу на вход DSP-цепочки
-      src.start();
-      O("singStatus", "пою через текущие эффекты…");
-      src.onended = function(){ O("singStatus", "готово"); btn.disabled = false; };
-    } else {
-      // микрофон выключен: играем через отдельную копию цепочки
-      if(!singCtx){
-        singCtx = new AC();
-        var url = URL.createObjectURL(new Blob([$("vcWorklet").textContent], {type:"application/javascript"}));
-        await singCtx.audioWorklet.addModule(url);
-      }
-      await singCtx.resume();
-      var audio = await singCtx.decodeAudioData(buf);
-      var src = singCtx.createBufferSource();
-      src.buffer = audio;
-      // мини-цепочка с текущими настройками
-      var w = new AudioWorkletNode(singCtx, "vc-core", {outputChannelCount:[1]});
-      var wp = function(n){ return w.parameters.get(n); };
-      wp("ratio").value = Math.pow(2, st.semi/12);
-      wp("auto").value = st.auto;
-      wp("autoSemi").value = st.semi;
-      wp("ringFreq").value = st.ringFreq; wp("ringMix").value = st.ringMix;
-      wp("drive").value = st.drive; wp("bits").value = st.bits;
-      wp("down").value = st.down; wp("gate").value = 0; // гейт не нужен: это файл
-      var hp = singCtx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = Math.max(20, st.hp);
-      var lp = singCtx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = st.lp;
-      var g = singCtx.createGain(); g.gain.value = st.vol;
-      var comp = singCtx.createDynamicsCompressor();
-      var conv = singCtx.createConvolver(); conv.buffer = makeIR(singCtx, st.revSize, 2.4);
-      var revWet = singCtx.createGain(); revWet.gain.value = st.rev*1.6;
-      var echoD = singCtx.createDelay(1.0); echoD.delayTime.value = st.echoTime/1000;
-      var echoFb = singCtx.createGain(); echoFb.gain.value = st.echoFb/100;
-      var echoWet = singCtx.createGain(); echoWet.gain.value = st.echoMix;
-      var outBus = singCtx.createGain();
-      src.connect(w); w.connect(hp); hp.connect(lp); lp.connect(g); g.connect(outBus);
-      lp.connect(conv); conv.connect(revWet); revWet.connect(outBus);
-      g.connect(echoD); echoD.connect(echoFb); echoFb.connect(echoD);
-      echoD.connect(echoWet); echoWet.connect(outBus);
-      outBus.connect(comp); comp.connect(singCtx.destination);
-      src.start();
-      O("singStatus", "пою через текущие эффекты…");
-      src.onended = function(){ O("singStatus", "готово"); btn.disabled = false; };
+/* ============ 🔁 диктор: твой голос → выбранный голос ============ */
+var SE_VOICES = ["Brian","Amy","Emma","Joanna","Salli","Kimberly","Ivy","Matthew","Justin","Joey","Russell","Nicole","Geraint","Tatyana","Maxim","Raveena"];
+var dictorOn = false, dictorRec = null, playCtx = null;
+function fillDictorVoices(){
+  var sel = $("dictorVoice");
+  var keep = sel.value;
+  sel.innerHTML = "";
+  function grp(label){
+    var g = document.createElement("optgroup"); g.label = label; sel.appendChild(g); return g;
+  }
+  var g1 = grp("Онлайн-голоса");
+  SE_VOICES.forEach(function(v){
+    var o = document.createElement("option"); o.value = "se|" + v; o.textContent = v + " (онлайн)";
+    g1.appendChild(o);
+  });
+  if(sapiVoiceNames.length){
+    var g3 = grp("Системные (SAPI, оффлайн)");
+    sapiVoiceNames.forEach(function(v){
+      var o = document.createElement("option"); o.value = "sapi|" + v; o.textContent = v;
+      g3.appendChild(o);
+    });
+  }
+  if(typeof speechSynthesis !== "undefined"){
+    var vs = [];
+    try{ vs = speechSynthesis.getVoices() || []; }catch(e){}
+    if(vs.length){
+      var g2 = grp("Браузерные (в Edge есть онлайн-нейро)");
+      vs.forEach(function(v){
+        var o = document.createElement("option"); o.value = "browser|" + v.name;
+        o.textContent = v.name + (v.lang ? " (" + v.lang + ")" : "");
+        g2.appendChild(o);
+      });
     }
-  }catch(err){
-    O("singStatus", "ошибка: " + (err.message || err), true);
-    btn.disabled = false;
+  }
+  if(keep) sel.value = keep;
+}
+fillDictorVoices();
+if(typeof speechSynthesis !== "undefined"){
+  speechSynthesis.onvoiceschanged = function(){ fillDictorVoices(); };
+}
+function ensurePlayCtx(){
+  if(!playCtx) playCtx = new AC();
+  if(playCtx.state === "suspended") playCtx.resume();
+  return playCtx;
+}
+async function dictorSpeak(text){
+  var parts = $("dictorVoice").value.split("|");
+  var kind = parts[0], name = parts[1];
+  try{
+    if(kind === "se" || kind === "sapi"){
+      var r;
+      if(kind === "se"){
+        var u = "https://api.streamelements.com/kappa/v2/speech?voice=" + encodeURIComponent(name) + "&text=" + encodeURIComponent(text);
+        r = await fetch(u);
+      } else {
+        r = await fetch("/api/tts", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ text: text, voice: name, rate: 1, pitch: 1, volume: 1 })
+        });
+      }
+      if(!r.ok) throw new Error("голос недоступен (" + r.status + ")");
+      var ctx = ensurePlayCtx();
+      var audio = await ctx.decodeAudioData(await r.arrayBuffer());
+      var src = ctx.createBufferSource(); src.buffer = audio;
+      src.connect(ctx.destination); src.start();
+    } else {
+      var vs = speechSynthesis.getVoices();
+      var v = vs.find(function(x){ return x.name === name; });
+      var ut = new SpeechSynthesisUtterance(text);
+      if(v) ut.voice = v;
+      speechSynthesis.cancel();
+      speechSynthesis.speak(ut);
+    }
+    O("dictorStatus", "озвучено: «" + text + "»");
+  }catch(e){
+    O("dictorStatus", "ошибка озвучки: " + (e.message || e), true);
+  }
+}
+$("dictorBtn").addEventListener("click", function(){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    O("dictorStatus", "распознавание речи не поддерживается здесь (нужен Chrome/Edge и интернет)", true);
+    return;
+  }
+  if(dictorOn){
+    dictorOn = false;
+    try{ dictorRec.stop(); }catch(e){}
+    this.textContent = "▶ Включить";
+    this.classList.remove("active");
+    O("dictorStatus", "диктор выключен");
+    return;
+  }
+  dictorRec = new SR();
+  dictorRec.lang = "ru-RU";
+  dictorRec.continuous = true;
+  dictorRec.interimResults = false;
+  dictorRec.onresult = function(e){
+    var t = e.results[e.results.length - 1][0].transcript.trim();
+    if(t) dictorSpeak(t);
+  };
+  dictorRec.onerror = function(e){
+    if(e.error === "not-allowed"){
+      O("dictorStatus", "нет доступа к распознаванию — разреши микрофон", true);
+    } else if(e.error === "network"){
+      O("dictorStatus", "распознаванию нужен интернет", true);
+    }
+  };
+  dictorRec.onend = function(){ if(dictorOn){ try{ dictorRec.start(); }catch(e){} } };
+  try{
+    dictorRec.start();
+    dictorOn = true;
+    this.textContent = "■ Выключить";
+    this.classList.add("active");
+    O("dictorStatus", "диктор включён — говори, фразы полетят выбранным голосом");
+  }catch(e){
+    O("dictorStatus", "не удалось запустить распознавание: " + (e.message || e), true);
   }
 });
 
@@ -1443,6 +1595,14 @@ PAD_LIST.forEach(function(item){
 KEYMAP = loadKeymap();
 refreshPadLabels();
 
+/* обратная карта: кнопка → звук (для обработчика клавиш) */
+var KEYREV = {};
+function rebuildKeyrev(){
+  KEYREV = {};
+  for(var name in KEYMAP) KEYREV[KEYMAP[name]] = name;
+}
+rebuildKeyrev();
+
 /* долгое нажатие → выбор клавиши; Esc — сбросить привязку */
 function startListen(name){
   listeningPad = name;
@@ -1462,6 +1622,7 @@ function padName(name){
 }
 
 function triggerPad(name){
+  window.__lastPad = name; // для авто-тестов
   ensureLab();
   if(labCtx.state === "suspended") labCtx.resume();
   var S = { p: parseFloat($("labPitch").value), bright: parseFloat($("labBright").value), time: parseFloat($("labTime").value) };
@@ -1472,7 +1633,7 @@ function triggerPad(name){
     setTimeout(function(){ pad.classList.remove("flash"); }, 180);
   }
 }
-document.addEventListener("keydown", function(e){
+function padKeyDispatch(e){
   if(e.repeat) return;
   if(!$("tab-lab").classList.contains("active")) return;
   var t = e.target;
@@ -1483,21 +1644,22 @@ document.addEventListener("keydown", function(e){
     e.preventDefault();
     if(e.code === "Escape"){
       delete KEYMAP[listeningPad];
-      saveKeymap(); refreshPadLabels(); stopListen();
+      saveKeymap(); refreshPadLabels(); rebuildKeyrev(); stopListen();
       return;
     }
     // снять привязку с другого пэда, если клавиша занята
     for(var other in KEYMAP){ if(KEYMAP[other] === e.code) delete KEYMAP[other]; }
     KEYMAP[listeningPad] = e.code;
-    saveKeymap(); refreshPadLabels();
+    saveKeymap(); refreshPadLabels(); rebuildKeyrev();
     O("labStatus", "«" + padName(listeningPad) + "» → " + keyLabel(e.code));
     stopListen();
     return;
   }
 
-  var s = KEYMAP[e.code];
+  var s = KEYREV[e.code];
   if(s){ e.preventDefault(); triggerPad(s); }
-});
+}
+document.addEventListener("keydown", padKeyDispatch);
 
 /* слайдеры лаборатории */
 mkSlider($("labSliders"), "labPitch",  "Высота",       0.5, 2,   0.05, 1,    function(v){ return "×" + v.toFixed(2); });
@@ -1649,8 +1811,7 @@ var BLACK_KEYS = [
   {semi:15, code:"KeyJ",         label:"J"},
   {semi:18, code:"KeyK",         label:"K"},
   {semi:20, code:"KeyL",         label:"L"},
-  {semi:22, code:"Semicolon",    label:";"},
-  {semi:25, code:"Quote",        label:"'"}
+  {semi:22, code:"Semicolon",    label:";"}
 ];
 var CODE2KEY = {};
 WHITE_KEYS.concat(BLACK_KEYS).forEach(function(k){ CODE2KEY[k.code] = k; });
@@ -1731,6 +1892,14 @@ function stepOctave(d){
   O("synthOctaveOut", "C" + v);
   buildPiano();
 }
+
+/* тема клавиш: обычная / огонь */
+$("fireBtn").addEventListener("click", function(){
+  var wrap = document.querySelector(".pianoWrap");
+  var fire = wrap.classList.toggle("fire");
+  this.textContent = fire ? "💧 Обычные клавиши" : "🔥 Огонь";
+  this.classList.toggle("active", fire);
+});
 
 /* запись синтезатора */
 var synthRecActive = false, synthRec = null, synthRecChunks = [], synthRecDest = null;
@@ -2042,54 +2211,6 @@ if(!ttsOK && !location.protocol.match(/^https?:$|^file:/)){
   ttsStatus("синтез речи недоступен в этой среде", true);
 }
 
-/* ============ нейро-голос (десктоп: w-okada) ============ */
-var neuroTimer = 0;
-function neuroSetStatus(txt, isErr){
-  var el = $("neuroStatus");
-  el.textContent = txt;
-  el.className = "status" + (isErr ? " err" : "");
-}
-function neuroPoll(){
-  fetch("/api/neuro/status").then(function(r){ return r.json(); }).then(function(d){
-    neuroSetStatus("статус: " + ({
-      idle: "не запущен", installing: "устанавливается…", running: "работает", error: "ошибка"
-    })[d.status] || d.status);
-    var running = d.status === "running";
-    $("neuroStart").disabled = running || d.status === "installing";
-    $("neuroStopBtn").disabled = !running && d.status !== "installing";
-    var log = $("neuroLog");
-    if(d.log && d.log.length){
-      log.textContent = d.log.join("\n");
-      log.scrollTop = log.scrollHeight;
-    }
-    var card = $("neuroEmbedCard");
-    if(running){
-      card.style.display = "";
-      var fr = $("neuroFrame");
-      if(fr.dataset.src !== "1"){ fr.src = "http://127.0.0.1:18888/"; fr.dataset.src = "1"; }
-    } else {
-      card.style.display = "none";
-      $("neuroFrame").dataset.src = "";
-    }
-  }).catch(function(){
-    neuroSetStatus("недоступно в веб-версии (нужна программа)", true);
-    clearInterval(neuroTimer);
-  });
-}
-$("neuroStart").addEventListener("click", function(){
-  neuroSetStatus("статус: запускаю…");
-  fetch("/api/neuro/start", {method: "POST"}).catch(function(){
-    neuroSetStatus("недоступно в веб-версии (нужна программа)", true);
-  });
-});
-$("neuroStopBtn").addEventListener("click", function(){
-  fetch("/api/neuro/stop", {method: "POST"}).catch(function(){});
-});
-$("neuroOpen").addEventListener("click", function(){
-  window.open("http://127.0.0.1:18888/", "_blank");
-});
-neuroPoll();
-neuroTimer = setInterval(neuroPoll, 3000);
 </script>
 </body>
 </html>
