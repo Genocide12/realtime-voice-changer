@@ -181,6 +181,23 @@ footer{border-top:1px solid var(--line);padding:20px 0 34px;color:var(--dim);fon
         <div class="chips" id="presetChips"></div>
       </div>
       <div class="card">
+        <h3>🎙 Микрофон и нейроголос</h3>
+        <div class="toolbar" style="margin-bottom:8px;flex-wrap:wrap">
+          <select class="sel" id="micSel" style="max-width:100%;min-width:180px"></select>
+          <button class="btn" id="micRefresh" title="обновить список">⟳</button>
+        </div>
+        <span class="status" id="micStatus">вход: по умолчанию. Названия устройств появятся после первого запуска микрофона</span>
+      </div>
+      <div class="card">
+        <h3>🧠 Нейроголос (RVC-движок)</h3>
+        <span class="status" id="neuroStatus">настоящая ИИ-подмена тембра — через локальный движок w-okada: 1) установи VB-Cable и движок по кнопкам ниже; 2) в w-okada выбери выходом «CABLE Input»; 3) здесь выше выбери входом «CABLE Output» — нейроголос пойдёт через эффекты программы. Без движка работают обычные эффекты вкладки</span>
+        <div class="toolbar" style="margin-top:8px;flex-wrap:wrap">
+          <button class="btn" id="neuroCheck">🔌 Проверить движок</button>
+          <a class="btn" href="https://www.vb-audio.com/Cable/" target="_blank" rel="noopener">VB-Cable ↗</a>
+          <a class="btn" href="https://github.com/w-okada/voice-changer/releases" target="_blank" rel="noopener">Движок w-okada ↗</a>
+        </div>
+      </div>
+      <div class="card">
         <h3>🔁 Диктор: твой голос → другой голос</h3>
         <div class="toolbar" style="margin-bottom:8px;flex-wrap:wrap">
           <select class="sel" id="dictorVoice" style="max-width:100%;min-width:180px"></select>
@@ -741,15 +758,70 @@ function applyAll(){
   }, 250);
 }
 
+/* выбор устройства входа (нужен и для нейроголоса: вход = CABLE Output) */
+var inDev = (function(){ try{ return localStorage.getItem("vcInDev") || ""; }catch(e){ return ""; } })();
+function mkMicCons(){
+  var c = { echoCancellation:false, noiseSuppression:true, autoGainControl:false };
+  if(inDev) c.deviceId = { exact: inDev };
+  return c;
+}
+function fillMicSel(){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+  navigator.mediaDevices.enumerateDevices().then(function(ds){
+    var sel = $("micSel"); if(!sel) return;
+    var keep = inDev;
+    sel.innerHTML = "";
+    var o0 = document.createElement("option"); o0.value = ""; o0.textContent = "вход: по умолчанию"; sel.appendChild(o0);
+    ds.filter(function(d){ return d.kind === "audioinput"; }).forEach(function(d, i){
+      var o = document.createElement("option"); o.value = d.deviceId;
+      o.textContent = d.label || ("Микрофон " + (i + 1));
+      sel.appendChild(o);
+    });
+    if(keep) sel.value = keep;
+    if(!sel.value && keep !== undefined){ sel.value = ""; }
+  }).catch(function(){});
+}
+async function switchMic(){
+  if(!voiceCtx || !micStream) return;
+  try{ micStream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+  try{
+    micStream = await navigator.mediaDevices.getUserMedia(mkMicCons());
+    try{ micSrc.disconnect(); }catch(e){}
+    micSrc = voiceCtx.createMediaStreamSource(micStream);
+    micSrc.connect(inAn); micSrc.connect(worklet); micSrc.connect(bypassGain);
+    O("micStatus", "вход переключён");
+  }catch(e){
+    O("micStatus", "не удалось переключить вход: " + (e.name || "ошибка"), true);
+  }
+}
+$("micRefresh").addEventListener("click", fillMicSel);
+$("micSel").addEventListener("change", function(){
+  inDev = this.value || "";
+  try{ localStorage.setItem("vcInDev", inDev); }catch(e){}
+  O("micStatus", inDev ? "вход выбран — применяю" : "вход: по умолчанию");
+  if(voiceOn) switchMic(); else fillMicSel();
+});
+$("neuroCheck").addEventListener("click", async function(){
+  O("neuroStatus", "проверяю движок на localhost:18888…");
+  try{
+    await fetch("http://localhost:18888/", { signal: AbortSignal.timeout(2500) });
+    O("neuroStatus", "движок отвечает — теперь выбери вход «CABLE Output» в списке микрофона выше (маршрут: w-okada → CABLE Input → CABLE Output → программа)");
+  }catch(e){
+    O("neuroStatus", "движок не отвечает — запусти w-okada (кнопка ниже). Без движка работают обычные эффекты вкладки «Голос»", true);
+  }
+});
+fillMicSel();
+if(navigator.mediaDevices && navigator.mediaDevices.addEventListener){
+  try{ navigator.mediaDevices.addEventListener("devicechange", fillMicSel); }catch(e){}
+}
+
 async function voiceStart(){
   if(voiceOn) return;
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
     vstatus("микрофон недоступен в этой среде", true); return;
   }
   try{
-    micStream = await navigator.mediaDevices.getUserMedia({
-      audio:{ echoCancellation:false, noiseSuppression:true, autoGainControl:false }
-    });
+    micStream = await navigator.mediaDevices.getUserMedia(mkMicCons());
   }catch(e){
     vstatus("микрофон недоступен: " + (e.name || "ошибка"), true); return;
   }
@@ -811,6 +883,7 @@ async function voiceStart(){
   voiceOn = true;
   $("voiceStart").disabled = true; $("voiceStop").disabled = false;
   vstatus("работаю: голос заменяется на лету");
+  fillMicSel(); // теперь доступны названия устройств
   applyAll();
   drawMeters();
 }
