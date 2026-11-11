@@ -9,7 +9,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -141,37 +140,6 @@ func registerAPI(mux *http.ServeMux) {
 			return
 		}
 		w.Write(wav)
-	})
-
-	// онлайн-голоса (StreamElements) через прокси — на случай строгого CORS/файрвола
-	mux.HandleFunc("/api/tts-online", func(w http.ResponseWriter, r *http.Request) {
-		voice := r.URL.Query().Get("voice")
-		text := r.URL.Query().Get("text")
-		if voice == "" || text == "" {
-			http.Error(w, "нужны voice и text", http.StatusBadRequest)
-			return
-		}
-		url := "https://api.streamelements.com/kappa/v2/speech?voice=" + url.QueryEscape(voice) + "&text=" + url.QueryEscape(text)
-		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
-		defer cancel()
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		req.Header.Set("User-Agent", "VoiceChanger/2.2")
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			http.Error(w, "онлайн-голос недоступен: "+err.Error(), http.StatusBadGateway)
-			return
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			http.Error(w, fmt.Sprintf("сервер голосов вернул %d", resp.StatusCode), http.StatusBadGateway)
-			return
-		}
-		w.Header().Set("Content-Type", "audio/mpeg")
-		_, _ = io.Copy(w, resp.Body)
 	})
 }
 
