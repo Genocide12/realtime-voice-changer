@@ -1,29 +1,28 @@
 # realtime-voice-changer
 
 
-## v2.5 (2026-11-11)
-- Шумодав «Очистка голоса» больше не глушит голос: адаптивный шумовой пол растёт
-  только в тишине и не выше 10% пика речи, приглушение не глубже -34 дБ
-- Убрано постоянное шипение в записи и пресетах: сглаженный реверб-хвост,
-  шумоподавление микрофона (noiseSuppression), ВЧ-фильтр 28 Гц на выходе,
-  мягкий компрессор; убрано двойное подключение реверберации
-- Диктор: мёртвый StreamElements (ошибка 401) удалён. Остались голоса Windows/браузера;
-  в приложении SAPI-фраза идёт через текущие эффекты голоса
-- Компоновка без прокруток на любом экране (flex 100dvh, внутренний скролл вкладок)
-- Генератор звуков: реальные записи (Kenney CC0 + Wikimedia Commons)
+## v2.6 (2026-11-11)
+- Генератор звуков: **30 из 35 пэдов — реальные записи** (Kenney CC0 + OpenGameArt + Wikimedia Commons);
+  остальные 5 (гудок, сигнализация, морзе, собака, капля) — качественный синтез
+- Релиз на GitHub: exe для Windows + бинарник Linux + однофайловая веб-версия
 
 ## Источники звуков генератора (лицензии)
-- Kenney — kenney.nl, CC0 (sci-fi, impact, digital, ui)
-- Wikimedia Commons: гром — Thunder crack 2B (CC BY-SA 4.0, Jud McCranie);
-  дождь — Rain against the window (PD); ветер — Wind in forest (CC BY 4.0, Gravity Sound);
-  океан — Sea waves (CC BY-SA 4.0, Ganesh Mohan T); огонь — Campfire sound ambience (CC BY 3.0);
-  сирена (PD); будильник — WWS Alarmclockringing (CC BY 4.0, Work With Sounds);
-  гудок — Tone dialling phone germany (PD); морзе — Wikipedia-Morse (CC BY-SA 3.0, Horsten);
-  капля — Suikinkutsu recording (CC BY-SA 3.0, Torsodog); сердце — Heartbeat mitral valve (PD);
-  часы — Alarm clock ticking (PD); птица — Birdsong morning 01 (CC BY-SA 4.0, Matutinho);
-  сверчок — Field cricket (CC BY-SA 3.0, Thatcher); кот — Maullido de gata hembra joven (CC0);
-  собака — Barking of a dog (CC BY-SA 3.0, Amada44); гонг — Gong55 (CC0, stephan);
-  вертолёт — Helicopter flying overhead (Attribution); пар — WWS Steamlocomotive (CC BY 4.0, WWS)
+- Kenney — kenney.nl, CC0 (sci-fi, impact, digital, ui): лазер, взрыв, разряд, металл, вжух, гул,
+  мотор, НЛО, пузыри, плазма, падение, бипы, кик, снейр, хэт, хлопок, пар (thruster)
+- OpenGameArt.org (см. страницы): гром — [rain-and-thunders](https://opengameart.org/content/rain-and-thunders);
+  ветер — [wind-whoosh-loop](https://opengameart.org/content/wind-whoosh-loop);
+  океан — [sea-and-river-wave-sounds](https://opengameart.org/content/sea-and-river-wave-sounds);
+  огонь — [fireplace-sound-loop](https://opengameart.org/content/fireplace-sound-loop);
+  сирена — [sirens-and-alarm-noise](https://opengameart.org/content/sirens-and-alarm-noise);
+  птица — [bird-chirping-sounds](https://opengameart.org/content/bird-chirping-sounds);
+  сверчок — [crickets-ambient-noise-loopable](https://opengameart.org/content/crickets-ambient-noise-loopable);
+  кот — [meow](https://opengameart.org/content/meow);
+  вертолёт — [propeller-cartoon-loop](https://opengameart.org/content/propeller-cartoon-loop);
+  дождь — [rain-loopable](https://opengameart.org/content/rain-loopable);
+  гонг, сердце, часы — OpenGameArt.org (CC0/CC-BY)
+- Wikimedia Commons — использовался как источник, но API отдал 429 (rate limit); звуки взяты из OGA
+
+
 
 
 ## v2.4 (2026-11-11)
