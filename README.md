@@ -1,6 +1,31 @@
 # realtime-voice-changer
 
 
+## v2.5 (2026-11-11)
+- Шумодав «Очистка голоса» больше не глушит голос: адаптивный шумовой пол растёт
+  только в тишине и не выше 10% пика речи, приглушение не глубже -34 дБ
+- Убрано постоянное шипение в записи и пресетах: сглаженный реверб-хвост,
+  шумоподавление микрофона (noiseSuppression), ВЧ-фильтр 28 Гц на выходе,
+  мягкий компрессор; убрано двойное подключение реверберации
+- Диктор: мёртвый StreamElements (ошибка 401) удалён. Остались голоса Windows/браузера;
+  в приложении SAPI-фраза идёт через текущие эффекты голоса
+- Компоновка без прокруток на любом экране (flex 100dvh, внутренний скролл вкладок)
+- Генератор звуков: реальные записи (Kenney CC0 + Wikimedia Commons)
+
+## Источники звуков генератора (лицензии)
+- Kenney — kenney.nl, CC0 (sci-fi, impact, digital, ui)
+- Wikimedia Commons: гром — Thunder crack 2B (CC BY-SA 4.0, Jud McCranie);
+  дождь — Rain against the window (PD); ветер — Wind in forest (CC BY 4.0, Gravity Sound);
+  океан — Sea waves (CC BY-SA 4.0, Ganesh Mohan T); огонь — Campfire sound ambience (CC BY 3.0);
+  сирена (PD); будильник — WWS Alarmclockringing (CC BY 4.0, Work With Sounds);
+  гудок — Tone dialling phone germany (PD); морзе — Wikipedia-Morse (CC BY-SA 3.0, Horsten);
+  капля — Suikinkutsu recording (CC BY-SA 3.0, Torsodog); сердце — Heartbeat mitral valve (PD);
+  часы — Alarm clock ticking (PD); птица — Birdsong morning 01 (CC BY-SA 4.0, Matutinho);
+  сверчок — Field cricket (CC BY-SA 3.0, Thatcher); кот — Maullido de gata hembra joven (CC0);
+  собака — Barking of a dog (CC BY-SA 3.0, Amada44); гонг — Gong55 (CC0, stephan);
+  вертолёт — Helicopter flying overhead (Attribution); пар — WWS Steamlocomotive (CC BY 4.0, WWS)
+
+
 ## v2.4 (2026-11-11)
 - 17 звуков генератора — реальные записи (Kenney, CC0), вшиты в HTML
 - Диктор: живой голос → онлайн-голоса StreamElements / системные SAPI / браузерные
