@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 )
@@ -154,27 +155,48 @@ func sapiTTS(text, voice string, rate, pitch, volume float64) ([]byte, error) {
 	}
 	defer os.RemoveAll(tmp)
 	wavPath := filepath.ToSlash(filepath.Join(tmp, "out.wav"))
+	txtPath := filepath.ToSlash(filepath.Join(tmp, "in.txt"))
+
+	// Текст передаём файлом в UTF-8 BOM: stdin у PowerShell читается
+	// в кодовой странице консоли (CP866/1251) и русский текст ломается.
+	bom := []byte{0xEF, 0xBB, 0xBF}
+	if err := os.WriteFile(txtPath, append(bom, []byte(text)...), 0644); err != nil {
+		return nil, err
+	}
 
 	// SpMemoryStream: рендер в память -> wav-файл, без всплывающих окон.
 	ps := fmt.Sprintf(`
-$s = New-Object -ComObject SAPI.SpVoice
-$s.Rate = %d
-$s.Volume = %d
-try { $s.SelectVoice('%s') } catch {}
-$m = New-Object -ComObject SAPI.SpMemoryStream
-$s.AudioOutputStream = $m
-[void]$s.Speak([Console]::In.ReadToEnd())
-[IO.File]::WriteAllBytes('%s', $m.GetData())
+$ErrorActionPreference = 'Stop'
+try {
+  $t = Get-Content -LiteralPath '%s' -Raw -Encoding UTF8
+  $s = New-Object -ComObject SAPI.SpVoice
+  $s.Rate = %d
+  $s.Volume = %d
+  try { $s.SelectVoice('%s') } catch {}
+  $m = New-Object -ComObject SAPI.SpMemoryStream
+  $s.AudioOutputStream = $m
+  [void]$s.Speak($t)
+  [IO.File]::WriteAllBytes('%s', $m.GetData())
+} catch {
+  [Console]::Error.WriteLine($_.Exception.Message)
+  exit 1
+}
 `,
-		int(clamp(rate*10-10, -10, 10)), int(clamp(volume*100, 0, 100)), psEscape(voice), wavPath)
+		txtPath, int(clamp(rate*10-10, -10, 10)), int(clamp(volume*100, 0, 100)), psEscape(voice), wavPath)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	var out, errb bytes.Buffer
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "powershell", "-NoProfile", "-NonInteractive", "-Command", ps)
 	cmd.SysProcAttr = hideWindow()
-	cmd.Stdin = bytes.NewReader([]byte(text))
+	cmd.Stdout = &out
+	cmd.Stderr = &errb
 	if err := cmd.Run(); err != nil {
-		return nil, err
+		msg := strings.TrimSpace(errb.String())
+		if msg == "" {
+			msg = err.Error()
+		}
+		return nil, fmt.Errorf("SAPI: %s", msg)
 	}
 	return os.ReadFile(wavPath)
 }

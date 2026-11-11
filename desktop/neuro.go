@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -557,4 +558,100 @@ func registerNeuroAPI(mux *http.ServeMux) {
 	mux.HandleFunc("/api/neuro/convert", neuroConvertHandler)
 	mux.HandleFunc("/api/neuro/job", neuroJobHandler)
 	mux.HandleFunc("/api/neuro/file", neuroFileHandler)
+	mux.HandleFunc("/api/neuro/realtime/start", neuroRTStartHandler)
+	mux.HandleFunc("/api/neuro/realtime/status", neuroRTStatusHandler)
+	mux.HandleFunc("/api/neuro/realtime/stop", neuroRTStopHandler)
+}
+
+/* ============ реалтайм-нейроголос (seed-vc realtime, локальный gradio) ============ */
+
+const neuroRTPort = "18790"
+
+func neuroRTPidFile() string { return filepath.Join(neuroDir, "realtime.pid") }
+
+func neuroRTAlive() bool {
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort("127.0.0.1", neuroRTPort), 400*time.Millisecond)
+	if err != nil {
+		return false
+	}
+	conn.Close()
+	return true
+}
+
+func neuroRTStartHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST only", http.StatusMethodNotAllowed)
+		return
+	}
+	if !neuroInstalled() {
+		json.NewEncoder(w).Encode(map[string]interface{}{"error": "сначала установи движок — кнопка в карточке «Нейро-обработка записи»"})
+		return
+	}
+	if neuroRTAlive() {
+		json.NewEncoder(w).Encode(map[string]interface{}{"started": true, "ready": true})
+		return
+	}
+	if _, err := os.Stat(neuroRTPidFile()); err == nil {
+		os.Remove(neuroRTPidFile()) // устаревший pid — порт не отвечает
+	}
+	py := neuroPythonPath()
+	fp16 := "False"
+	if hasNvidia() {
+		fp16 = "True"
+	}
+	cmd := exec.Command(py, "-m", "seed_vc.app_vc_realtime", "--fp16", fp16)
+	cmd.Dir = neuroDir
+	cmd.Env = append(os.Environ(),
+		"HF_HOME="+filepath.Join(neuroDir, "hf-cache"),
+		"GRADIO_SERVER_PORT="+neuroRTPort,
+		"GRADIO_SERVER_NAME=127.0.0.1")
+	lf, err := os.OpenFile(filepath.Join(neuroDir, "realtime.log"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{"error": "не открыть лог: " + err.Error()})
+		return
+	}
+	cmd.Stdout = lf
+	cmd.Stderr = lf
+	if err := cmd.Start(); err != nil {
+		lf.Close()
+		json.NewEncoder(w).Encode(map[string]interface{}{"error": "запуск не удался: " + err.Error()})
+		return
+	}
+	pid := cmd.Process.Pid
+	os.WriteFile(neuroRTPidFile(), []byte(fmt.Sprintf("%d", pid)), 0644)
+	go func() {
+		_ = cmd.Wait() // сам завершится при закрытии окна/остановке
+		lf.Close()
+		if b, err := os.ReadFile(neuroRTPidFile()); err == nil && strings.TrimSpace(string(b)) == fmt.Sprintf("%d", pid) {
+			os.Remove(neuroRTPidFile())
+		}
+	}()
+	json.NewEncoder(w).Encode(map[string]interface{}{"started": true})
+}
+
+func neuroRTStatusHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	json.NewEncoder(w).Encode(map[string]interface{}{"running": neuroRTAlive(), "url": "http://127.0.0.1:" + neuroRTPort})
+}
+
+func neuroRTStopHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if b, err := os.ReadFile(neuroRTPidFile()); err == nil {
+		pid := 0
+		fmt.Sscanf(strings.TrimSpace(string(b)), "%d", &pid)
+		if pid > 0 {
+			if runtime.GOOS == "windows" {
+				out, err := neuroRun("taskkill", []string{"/F", "/T", "/PID", fmt.Sprintf("%d", pid)}, 15*time.Second)
+				_ = out
+				_ = err
+			} else {
+				if p, e := os.FindProcess(pid); e == nil {
+					_ = p.Kill()
+				}
+			}
+		}
+	}
+	os.Remove(neuroRTPidFile())
+	json.NewEncoder(w).Encode(map[string]interface{}{"stopped": true})
 }
